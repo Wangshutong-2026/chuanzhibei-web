@@ -4,6 +4,8 @@ import Home from '../views/Home.vue'
 
 import Workspace from '../views/Workspace.vue' 
 
+import News from '../views/News.vue' 
+
 const routes = [
   {
     path: '/',
@@ -14,6 +16,11 @@ const routes = [
     path: '/workspace',
     name: 'Workspace',
     component: Workspace
+  },
+  {
+    path: '/news',
+    name: 'News',
+    component: News
   }
 ]
 

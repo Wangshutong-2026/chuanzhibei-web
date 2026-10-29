@@ -1,3 +1,4 @@
+
 <template>
   <div class="workspace-layout">
     <!-- 左侧导航 -->
@@ -150,6 +151,7 @@
 
 <script setup>
 import { ref } from 'vue'
+import axios from 'axios'
 
 const price = ref('')
 const isAuditing = ref(false)
@@ -231,14 +233,69 @@ const fillDemoData = () => {
 }
 
 const startAudit = () => {
-  showError.value = false
-  showReport.value = false
-  isAuditing.value = true
+  if (!imagePreview.value || !price.value) {
+    showError.value = true
+    return
+  }
   
-  setTimeout(() => {
+  isAuditing.value = true
+  showReport.value = false
+
+  // 准备真实的数据包 (FormData) 用来装图片
+  const formData = new FormData()
+  
+  // 拿到页面上用户上传的那个真实图片文件
+  const fileInput = document.getElementById('file-upload')
+  
+  if (fileInput && fileInput.files.length > 0) {
+    // 如果有真实图片，就装进去
+    formData.append('file', fileInput.files[0])
+  } else {
+    // 如果用户点了一键填充（没有真实文件），就不让他往下走
+    alert("为了让 AI 真实识别，请手动选择一张配料表图片上传！")
     isAuditing.value = false
-    showReport.value = true
-  }, 2000)
+    return
+  }
+  
+  // 把价格也装进去
+  formData.append('price', price.value)
+
+  // 模拟 1.5 秒的 AI 计算时间
+  setTimeout(async () => {
+    try {
+      // 🌟 注意这里：请求的是 real_audit 接口，不再是 save_audit 了
+      const res = await axios.post('http://127.0.0.1:8000/api/real_audit', formData)
+      
+      if(res.data.status === 'success') {
+        const aiData = res.data.data
+        // 把 AI 返回的真实数据填进报告里
+        currentReport.value = {
+          realCost: aiData.cost,
+          statusText: aiData.risk,
+          conclusion1: aiData.analysis,
+          conclusion2: "此结论由通义千问 VL 视觉大模型实时识别包装图生成。"
+        }
+        showReport.value = true
+      } else {
+        alert("AI 识别失败：" + res.data.message)
+      }
+    } catch (error) {
+      console.error("❌ 详细错误信息:", error)
+      
+      // 👇 核心：把后端的真实报错或者网络错误弹出来，不让他只说“未连接”
+      if (error.response) {
+        // 请求发出去了，但后端返回了错误状态码（比如 422, 500）
+        alert(`后端返回错误! 状态码: ${error.response.status}，详情: ${JSON.stringify(error.response.data)}`)
+      } else if (error.request) {
+        // 请求发出去了，但没收到响应（大概率是跨域被拦，或者后端崩了）
+        alert("请求无响应！大概率是跨域(CORS)被浏览器拦截，请检查后端是否加了允许跨域的中间件！")
+      } else {
+        alert('前端代码报错: ' + error.message)
+      }
+    } finally {
+      isAuditing.value = false
+    }
+  }, 1500)
 }
 </script>
 
