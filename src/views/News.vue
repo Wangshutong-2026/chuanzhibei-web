@@ -19,7 +19,7 @@
       <section class="featured-news" @click="openExternalNews('https://www.petfoodchina.com/')">
         <div class="featured-img-box">
           <div class="featured-tag">🔥 焦点重磅</div>
-          <img src="https://images.unsplash.com/photo-1628009368231-7bb7cb1925a8?q=80&w=1000&auto=format&fit=crop" alt="焦点资讯" />
+          <img src="/toutiao.jpg" alt="焦点资讯" />
         </div>
         <div class="featured-content">
           <div class="meta">

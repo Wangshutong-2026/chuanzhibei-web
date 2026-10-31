@@ -12,10 +12,13 @@
 }
 
 body {
+  background-image: url("/宠物档案.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+  color: #1a2b48;
   margin: 0;
   padding: 0;
-  background-color: #F4F6F9; /* 全局浅灰底色 */
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
 }
 </style>
