@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import PetArchive from '../views/PetArchive.vue' 
-
+import PetBillPage from '../views/PetBillPage.vue' 
 const routes = [
   { 
     path: '/', 
@@ -17,6 +17,16 @@ const routes = [
     path: '/pets',          // 浏览器地址栏显示的路径
     name: 'Pets',    // 路由名字
     component: PetArchive  // 对应上面引入的组件
+  },
+  {
+    path: '/pet-bill',
+    name: 'PetBillPage',
+    component: PetBillPage
+  },
+  { 
+    path: '/bill', 
+    name: 'Bill', 
+    component: PetBillPage 
   }
 
   // ⚠️ 下面这些等你建好对应的空文件了，再把它们解除注释：
