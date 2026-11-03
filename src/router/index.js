@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import PetArchive from '../views/PetArchive.vue' 
 import PetBillPage from '../views/PetBillPage.vue' 
+import News from '../views/News.vue' 
 const routes = [
   { 
     path: '/', 
@@ -27,7 +28,18 @@ const routes = [
     path: '/bill', 
     name: 'Bill', 
     component: PetBillPage 
+  },
+  {
+  path: '/login',
+  name: 'Login',
+  component: () => import('../views/Login.vue')
+  },
+  {
+  path:'/feed',
+  name:'Feed',
+  component: ()=>import('../views/Feed.vue')
   }
+
 
   // ⚠️ 下面这些等你建好对应的空文件了，再把它们解除注释：
   // { path: '/pet-list', name: 'PetList', component: () => import('../views/pet-list.vue') },

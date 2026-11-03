@@ -20,14 +20,14 @@
         <a class="active" @click="$router.push('/')">首页</a>
         <a @click="$router.push('/pets')">宠物档案</a>
         <a @click="$router.push('/calendar')">免疫日历</a>
-        <a @click="$router.push('/diet')">每日喂食</a>
+        <a @click="$router.push('/feed')">每日喂食</a>
         <a @click="$router.push('/bill')">日常账本</a>
-        <a @click="$router.push('/knowledge')">养护百科</a>
+        <a @click="$router.push('/news')">养护百科</a>
       </nav>
 
       <!-- 右侧按钮 -->
       <div class="header-actions">
-        <button class="btn-text">登录 / 注册</button>
+        <button class="btn-text" @click="$router.push('/login')">登录 / 注册</button>
         <button class="btn-solid" @click="$router.push('/pets')">创建档案</button>
       </div>
     </div>

@@ -19,7 +19,7 @@ import Header from './components/Header.vue'
 
 body {
   /* ⚠️ 注意：这里你写的是中文路径 "/宠物档案.png"，一定要确保 public 文件夹里有这张图，且名字一模一样 */
-  background-image: url("/宠物档案.png");
+  /* background-image: url("/宠物档案.png"); */
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;

@@ -320,6 +320,11 @@ import Header from '../components/Header.vue'
   font-family: -apple-system, sans-serif; 
   padding-top: 80px; /* ?? 从 72px 改成 80px，给背景图留点呼吸空间 */
   overflow-x: hidden; 
+  background-image: url('/public/home_bg.jpg'); /* ?? 新增：背景图 */
+  background-size:cover;
+  background-attachment: fixed;
+  background-color:rgba(253, 250, 245, 0.8); /* ?? 新增：半透明白色叠加，增加可读性 */
+  background-blend-mode: overlay;
 }
 
 .main-container { 
@@ -543,7 +548,7 @@ import Header from '../components/Header.vue'
 .cta-section { padding: 80px 0 100px; position: relative; z-index: 10; }
 .cta-card { 
   /* 你的背景图，记得换成你真实的图片名 */
-  background-image: url('/bg.png'); 
+  background-image: url('/bg.png');
   background-size: cover;
   background-position: center;
   
@@ -553,6 +558,8 @@ import Header from '../components/Header.vue'
   position: relative; 
   overflow: hidden; 
   border: 2px dashed #E6D0B3; 
+  max-width: 950px;
+  margin: 0 auto;
 }
 
 /* 👇 核心魔法：加一层白蒙蒙的遮罩，保证文字清晰 */
@@ -561,7 +568,7 @@ import Header from '../components/Header.vue'
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   /* 使用和咱们网页一致的米白色，透明度 85%，既能透出背景图，又不影响看字 */
-  background: rgba(253, 250, 245, 0.85); 
+  background: rgba(253, 250, 245, 0.75); 
   z-index: 1;
 }
 
