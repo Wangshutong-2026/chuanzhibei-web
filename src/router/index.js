@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import PetArchive from '../views/PetArchive.vue' 
 import PetBillPage from '../views/PetBillPage.vue' 
-import News from '../views/News.vue' 
+
 const routes = [
   { 
     path: '/', 
@@ -19,11 +19,7 @@ const routes = [
     name: 'Pets',    // 路由名字
     component: PetArchive  // 对应上面引入的组件
   },
-  {
-    path: '/pet-bill',
-    name: 'PetBillPage',
-    component: PetBillPage
-  },
+ 
   { 
     path: '/bill', 
     name: 'Bill', 
@@ -37,7 +33,7 @@ const routes = [
   {
   path:'/feed',
   name:'Feed',
-  component: ()=>import('../views/Feed.vue')
+  component: () => import('../views/Feed.vue')
   }
 
 

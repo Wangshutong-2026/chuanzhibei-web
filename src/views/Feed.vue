@@ -44,7 +44,7 @@
           <div v-if="aiTip.show || aiLoading" class="ai-tip-block">
               <div class="ai-title">🤖 AI饮食参考分析</div>
               <div v-if="aiLoading" class="ai-content">AI思考中，请稍候……</div>
-              <div v‑else class="ai-content">{{ aiTip.content }}</div>
+              <div v-else class="ai-content">{{ aiTip.content }}</div>
           </div>
 
 
@@ -78,7 +78,7 @@
           <div v-if="petArchiveList.length === 0" class="warn-tip">
             ⚠️ 暂无宠物档案，请先前往【宠物档案】页面添加宠物！
             <br />
-            <router-link to="/pet-archive" class="link-go">👉 去创建宠物档案</router-link>
+            <router-link to="/pets" class="link-go">👉 去创建宠物档案</router-link>
           </div>
         </div>
 
@@ -295,8 +295,6 @@ const deleteRecord = (idx) => {
 }
 </script>
 
-
-
 <style scoped>
 .feed-page {
   min-height: 100vh;
@@ -458,6 +456,7 @@ const deleteRecord = (idx) => {
 .link-go {
   color:#8c5e38;
   font-weight:bold;
+  text-decoration: none;
 }
 
 .btn-group {

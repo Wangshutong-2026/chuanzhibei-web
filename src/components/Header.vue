@@ -10,33 +10,36 @@
     <!-- 内容层（必须在猫猫和遮罩之上） -->
     <div class="header-inner">
       <!-- 左侧 Logo -->
-      <div class="logo" @click="$router.push('/')">
+      <div class="logo" @click="router.push('/')">
         <div class="logo-icon"></div>
         <span class="logo-text">伴宠有方</span>
       </div>
 
       <!-- 中间导航 -->
       <nav class="nav-links">
-        <a class="active" @click="$router.push('/')">首页</a>
-        <a @click="$router.push('/pets')">宠物档案</a>
-        <a @click="$router.push('/calendar')">免疫日历</a>
-        <a @click="$router.push('/feed')">每日喂食</a>
-        <a @click="$router.push('/bill')">日常账本</a>
-        <a @click="$router.push('/news')">养护百科</a>
+        <a class="active" @click="router.push('/')">首页</a>
+        <a @click="router.push('/pets')">宠物档案</a>
+        <a @click="router.push('/calendar')">免疫日历</a>
+        <a @click="router.push('/feed')">每日喂食</a>
+        <a @click="router.push('/bill')">日常账本</a>
+        <a @click="router.push('/news')">养护百科</a>
       </nav>
 
       <!-- 右侧按钮 -->
       <div class="header-actions">
-        <button class="btn-text" @click="$router.push('/login')">登录 / 注册</button>
-        <button class="btn-solid" @click="$router.push('/pets')">创建档案</button>
+        <button class="btn-text" @click="router.push('/login')">登录 / 注册</button>
+        <button class="btn-solid" @click="router.push('/pets')">创建档案</button>
       </div>
     </div>
   </header>
 </template>
 
-<script setup>
 // 逻辑不变
+<script setup>
+import { useRouter } from 'vue-router'
+const router = useRouter()
 </script>
+
 
 <style scoped>
 .header-space {
