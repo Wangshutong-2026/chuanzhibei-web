@@ -1,238 +1,247 @@
 <template>
-  <div class="page-wrap">
+  <div class="pet-archive-page">
     <Header />
-    <div class="container">
-      <!-- 胶带标题，和全站页面统一 -->
+    <div class="main-container">
+      <!--页面标题 -->
       <div class="page-header">
         <div class="header-left">
           <div class="tape-title-img">
             <img class="tape-bg-img" src="/jiaotiao5.png" alt="胶带背景" />
             <h1>我的宠物档案</h1>
           </div>
-          <p class="page-desc">记录小动物基础信息、生日、种类、体重，喂食模块与AI饮食分析将读取本档案数据</p>
+          <p>记录毛孩子基础信息，喂食、免疫AI分析将读取本档案数据</p>
+        </div>
+        <button class="add-btn" @click="openAddModal">➕新增宠物档案</button>
+      </div>
+
+      <!--顶部统计卡片 -->
+      <div class="stat-card">
+        <div class="stat-item">
+          <div class="num">{{ petList.length }}</div>
+          <div class="label">宠物总数量</div>
+        </div>
+        <div class="stat-item">
+          <div class="num">{{ catDogCount }}</div>
+          <div class="label">猫狗宠物</div>
+        </div>
+        <div class="stat-item">
+          <div class="num">{{ otherPetCount }}</div>
+          <div class="label">异宠（仓鼠/守宫/鸟类）</div>
         </div>
       </div>
 
-      <div class="card-wrap">
-        <!-- key使用pet.id，不再使用index，修复数组移位错乱bug -->
-        <div class="pet-card" v-for="(item, index) in petList" :key="item.id">
-          <div class="pet-avatar-wrap" @click="handleChangeAvatar(index)">
-            <img v-if="item.avatar" :src="item.avatar" alt="头像" />
-            <span v-else class="avatar-tip">点我上传<br />照片</span>
+      <!--空状态 -->
+      <div v-if="petList.length === 0" class="empty-tip">
+        📭 暂无宠物档案，点击上方按钮创建第一条宠物档案
+      </div>
+
+      <!--宠物档案卡片列表 -->
+      <div class="card-wrap" v-else>
+        <div class="pet-card" v-for="pet in petList" :key="pet.id">
+          <div class="card-head">
+            <h3>{{ pet.name }}</h3>
+            <div class="card-operate">
+              <button class="edit-btn" @click="openEditModal(pet)">✏️编辑</button>
+              <button class="del-btn" @click="handleDelete(pet.id)">🗑️删除</button>
+            </div>
           </div>
-          <div class="pet-name">{{ item.name }}</div>
-          <div class="pet-info">
-            品种：{{ item.breed }}<br />
-            生日：{{ item.birth }}<br />
-            性别：{{ item.gender }} | 体重：{{ item.weight }}kg
+          <div class="card-body">
+            <div class="row-item">
+              <span class="label">品种：</span>
+              <span>{{ pet.breed }}</span>
+            </div>
+            <div class="row-item">
+              <span class="label">生日：</span>
+              <span>{{ pet.birth || "未填写" }}</span>
+            </div>
+            <div class="row-item">
+              <span class="label">年龄：</span>
+              <span>{{ getAgeByBirth(pet.birth) }} 岁</span>
+            </div>
+            <div class="row-item">
+              <span class="label">体重(kg)：</span>
+              <span>{{ pet.weight }}</span>
+            </div>
           </div>
-          <div class="card-btn-group">
-            <button class="card-btn edit-btn" @click="openEdit(index)">修改</button>
-            <button class="card-btn del-btn" @click="delPet(index)">删除</button>
-          </div>
-        </div>
-        <div class="pet-card add-card" @click="openAdd">
-          <div class="plus">+</div>
-          <div>添加新宠物</div>
         </div>
       </div>
 
-      <!-- 提示跳转喂食页面 -->
-      <div class="tip-jump" v-if="petList.length > 0">
-        ✨档案添加完成，前往
-        <router-link to="/feed">每日喂食记录</router-link>
-        使用AI饮食参考分析
-      </div>
+      <!--弹窗：新增/编辑档案 -->
+      <transition name="modal">
+        <div v-if="modalShow" class="modal-mask" @click.self="closeModal">
+          <div class="modal-box">
+            <div class="modal-title">
+              {{ isEdit ? "编辑宠物档案" : "新增宠物档案" }}
+            </div>
+            <div class="form-item">
+              <label>宠物名字 <span class="red">*</span></label>
+              <input v-model="form.name" placeholder="例如：年糕" />
+            </div>
+            <div class="form-item">
+              <label>品种 <span class="red">*</span></label>
+              <input v-model="form.breed" placeholder="例如：布偶猫 / 金毛 / 豹纹守宫" />
+            </div>
+            <div class="form-item">
+              <label>生日</label>
+              <input type="date" v-model="form.birth" />
+            </div>
+            <div class="form-item">
+              <label>体重(kg) <span class="red">*</span></label>
+              <input type="number" step="0.01" min="0.01" v-model.number="form.weight" placeholder="例如3.2" />
+            </div>
+            <div class="modal-btn-group">
+              <button class="btn cancel" @click="closeModal">取消</button>
+              <button class="btn primary" @click="submitForm">保存</button>
+            </div>
+          </div>
+        </div>
+      </transition>
+
+      <!--toast提示 -->
+      <transition name="slide-up">
+        <div v-if="toastMessage" class="custom-toast">{{ toastMessage }}</div>
+      </transition>
     </div>
-
-    <!-- 新增/编辑弹窗 -->
-    <div class="mask" v-show="maskVisible">
-      <div class="form-box">
-        <h3>{{ formTitle }}</h3>
-        <div class="form-item">
-          <label>宠物名字</label>
-          <input v-model="formData.name" type="text" placeholder="例如：元宝、多多" />
-        </div>
-        <div class="form-item">
-          <label>品种/种类</label>
-          <input v-model="formData.breed" type="text" placeholder="例如：布偶猫、金毛、仓鼠、鹦鹉" />
-        </div>
-        <div class="form-item">
-          <label>生日</label>
-          <input v-model="formData.birth" type="date" />
-        </div>
-        <div class="form-item">
-          <label>性别</label>
-          <select v-model="formData.gender">
-            <option value="公">公</option>
-            <option value="母">母</option>
-          </select>
-        </div>
-        <div class="form-item">
-          <label>体重(kg)</label>
-          <input v-model.number="formData.weight" type="number" step="0.1" min="0.01" placeholder="例如：4.5" />
-        </div>
-        <div class="form-btn-group">
-          <button class="btn-cancel" @click="closeMask">取消</button>
-          <button class="btn-submit" @click="submitForm">保存</button>
-        </div>
-      </div>
-    </div>
-
-    <input
-      ref="avatarInputRef"
-      id="avatarInput"
-      type="file"
-      accept="image/*"
-      @change="onAvatarFileChange"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import Header from '../components/Header.vue'
+import { ref, computed, onMounted } from "vue";
+import Header from "../components/Header.vue";
 
-const maskVisible = ref(false)
-const formTitle = ref('添加宠物信息')
-const editIndex = ref(null)
-const currentAvatarIndex = ref(null)
-const avatarInputRef = ref(null)
+const STORAGE_KEY = "petArchiveList";
 
-const formData = ref({
-  id: '',
-  name: '',
-  breed: '',
-  birth: '',
-  gender: '公',
-  weight: ''
-})
+const petList = ref([]);
+const modalShow = ref(false);
+const isEdit = ref(false);
+const editId = ref(null);
+const toastMessage = ref("");
+let toastTimer = null;
 
-// ⭐统一存储key！！！和Feed.vue保持一致：petArchiveList
-const STORAGE_KEY = 'petArchiveList'
-const petList = ref(JSON.parse(localStorage.getItem(STORAGE_KEY)) || [])
+const form = ref({
+  name: "",
+  breed: "",
+  birth: "",
+  weight: null,
+});
 
+const catDogCount = computed(() => {
+  return petList.value.filter((p) => p.breed.includes("猫") || p.breed.includes("狗")).length;
+});
+const otherPetCount = computed(() => {
+  return petList.value.length - catDogCount.value;
+});
 
-
-// 根据生日计算年龄（供给AI分析）
 function getAgeByBirth(birthStr) {
-  if (!birthStr) return 1
-  const birth = new Date(birthStr)
-  const now = new Date()
-  let age = now.getFullYear() - birth.getFullYear()
-  const monthDiff = now.getMonth() - birth.getMonth()
+  if (!birthStr) return "--";
+  const birth = new Date(birthStr);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const monthDiff = now.getMonth() - birth.getMonth();
   if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
-    age--
+    age--;
   }
-  return age <= 0 ? 0.2 : age
+  return age <= 0 ? 0.2 : age;
 }
 
-// 保存本地
-function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(petList.value))
+function saveLocal() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(petList.value));
 }
 
-function closeMask() {
-  maskVisible.value = false
+function showToast(msg) {
+  toastMessage.value = msg;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toastMessage.value = "";
+  }, 2200);
 }
 
-// 打开新增
-function openAdd() {
-  editIndex.value = null
-  formTitle.value = '添加宠物信息'
-  formData.value = {
-    id: '',
-    name: '',
-    breed: '',
-    birth: '',
-    gender: '公',
-    weight: ''
-  }
-  maskVisible.value = true
+function openAddModal() {
+  isEdit.value = false;
+  editId.value = null;
+  form.value = {
+    name: "",
+    breed: "",
+    birth: "",
+    weight: null,
+  };
+  modalShow.value = true;
 }
 
-// 打开编辑
-function openEdit(index) {
-  editIndex.value = index
-  const item = petList.value[index]
-  formData.value = { ...item }
-  formTitle.value = '修改宠物信息'
-  maskVisible.value = true
+function openEditModal(pet) {
+  isEdit.value = true;
+  editId.value = pet.id;
+  form.value = {
+    name: pet.name,
+    breed: pet.breed,
+    birth: pet.birth,
+    weight: pet.weight,
+  };
+  modalShow.value = true;
 }
 
-// 删除
-function delPet(index) {
-  petList.value.splice(index, 1)
-  saveData()
+function closeModal() {
+  modalShow.value = false;
 }
 
-// 头像上传
-function handleChangeAvatar(index) {
-  currentAvatarIndex.value = index
-  avatarInputRef.value.click()
-}
-
-function onAvatarFileChange(e) {
-  const file = e.target.files[0]
-  if (!file || currentAvatarIndex.value === null) return
-  const reader = new FileReader()
-  reader.onload = (ev) => {
-    petList.value[currentAvatarIndex.value].avatar = ev.target.result
-    saveData()
-    currentAvatarIndex.value = null
-  }
-  reader.readAsDataURL(file)
-  e.target.value = ''
-}
-
-// 提交表单
 function submitForm() {
-  const { name, breed, birth, weight } = formData.value
-  if (!name?.trim()) return alert('请填写宠物名字')
-  if (!breed?.trim()) return alert('请填写品种')
-  if (!birth) return alert('请选择生日')
-  if (!weight || Number(weight) <= 0) return alert('请填写有效的体重')
+  if (!form.value.name) return showToast("请填写宠物名字");
+  if (!form.value.breed) return showToast("请填写品种");
+  if (!form.value.weight || Number(form.value.weight) <= 0) return showToast("请填写有效体重");
 
-  if (editIndex.value === null) {
-    // 新增：生成唯一id
-    petList.value.push({
-      ...formData.value,
-      id: Date.now().toString(),
-      avatar: null
-    })
-  } else {
-    // 编辑：保留原来的id、avatar，不被覆盖！修复编辑丢失头像bug
-    const oldItem = petList.value[editIndex.value]
-    petList.value[editIndex.value] = {
-      ...formData.value,
-      id: oldItem.id,
-      avatar: oldItem.avatar
+  if (isEdit.value) {
+    const idx = petList.value.findIndex((i) => i.id === editId.value);
+    if (idx !== -1) {
+      petList.value[idx] = { ...petList.value[idx], ...form.value };
     }
+    showToast("档案修改成功✅");
+  } else {
+    const newPet = {
+      id: Date.now(),
+      ...form.value,
+    };
+    petList.value.push(newPet);
+    showToast("档案创建成功✅");
   }
-  saveData()
-  closeMask()
+  saveLocal();
+  closeModal();
 }
+
+function handleDelete(id) {
+  petList.value = petList.value.filter((item) => item.id !== id);
+  saveLocal();
+  showToast("已删除该档案");
+}
+
+onMounted(() => {
+  const str = localStorage.getItem(STORAGE_KEY);
+  if (str) {
+    petList.value = JSON.parse(str);
+  }
+});
 </script>
 
+
 <style scoped>
-.page-wrap {
+.pet-archive-page {
   min-height: 100vh;
-  background-image: url('/home_bg.jpg');
+  background-image: url("/home_bg.jpg");
   background-size: cover;
   background-attachment: fixed;
   background-color: rgba(253, 250, 245, 0.82);
   background-blend-mode: overlay;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: -apple-system, sans-serif;
 }
-.container {
-  max-width: 1240px;
+.main-container {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 120px 20px 60px;
+  padding: 120px 20px 80px;
 }
-
-/* 页面头部胶带标题，全站统一 */
 .page-header {
-  margin-bottom: 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 32px;
 }
 .header-left {
   position: relative;
@@ -260,187 +269,223 @@ function submitForm() {
   letter-spacing: 1px;
   white-space: nowrap;
 }
-.page-desc {
+.header-left p {
   font-size: 15px;
   color: #8892A0;
   margin: 0;
   padding-left: 8px;
 }
-
-.tip-jump {
-  margin-top: 24px;
-  font-size: 14px;
-  color: #5C3A21;
-}
-.tip-jump a {
-  color: #d4a373;
+.add-btn {
+  background: linear-gradient(135deg, #8C5E38 0%, #D4A373 100%);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
   font-weight: bold;
 }
+.add-btn:hover {
+  transform: translateY(-2px);
+}
 
+/*统计卡片 */
+.stat-card {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+.stat-item {
+  flex-shrink: 0;
+  min-width: 160px;
+  background: #FFFDF9;
+  border: 2px dashed #D4A373;
+  border-radius: 16px;
+  padding: 18px 24px;
+  text-align: center;
+}
+.stat-item .num {
+  font-size: 32px;
+  font-weight: bold;
+  color: #5C3A21;
+  margin-bottom: 6px;
+}
+.stat-item .label {
+  font-size: 14px;
+  color: #8c6b4f;
+}
+
+.empty-tip {
+  text-align: center;
+  padding: 80px 0;
+  font-size: 16px;
+  color: #8c6b4f;
+}
 .card-wrap {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, min-max(340px, 1fr));
+  gap: 22px;
 }
 .pet-card {
-  background: #ffffff;
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  position: relative;
-  text-align: center;
-  border: 2px dashed #E6D0B3;
-}
-.pet-avatar-wrap {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background: #f7f3ee;
-  margin: 0 auto 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  cursor: pointer;
-}
-.pet-avatar-wrap img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.avatar-tip {
-  font-size: 13px;
-  color: #8892A0;
-  text-align: center;
-}
-.pet-name {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 8px;
-  color: #5C3A21;
-}
-.pet-info {
-  color: #5E6B82;
-  font-size: 14px;
-  line-height: 1.8;
-  margin-bottom: 16px;
-}
-.card-btn-group {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-.card-btn {
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-}
-.edit-btn {
-  background: #F3E9DD;
-  color: #5C3A21;
-}
-.del-btn {
-  background: #ffeeee;
-  color: #c83c3c;
-}
-.add-card {
+  background: #FFFDF9;
   border: 2px dashed #D4A373;
-  border-radius: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 240px;
-  color: #5C3A21;
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.44);
+  border-radius: 20px;
+  padding: 24px;
   transition: 0.25s;
 }
-.add-card:hover {
-  background: rgba(255, 255, 255, 0.7);
+.pet-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.05);
 }
-.add-card .plus {
-  font-size: 32px;
-  margin-bottom: 8px;
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  border-bottom: 1px dashed #E6D0B3;
+  padding-bottom: 12px;
+}
+.card-head h3 {
+  margin: 0;
+  font-size: 22px;
+  color: #5C3A21;
+}
+.card-operate {
+  display: flex;
+  gap: 8px;
+}
+.edit-btn {
+  border: none;
+  background: #e8f3ff;
+  color: #0052D9;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.del-btn {
+  border: none;
+  background: #ffe9e9;
+  color: #d14343;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.row-item {
+  display: flex;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+.row-item .label {
+  color: #5C3A21;
+  font-weight: bold;
+  width: 90px;
+  flex-shrink: 0;
 }
 
-/* 弹窗遮罩 */
-.mask {
+/*弹窗 */
+.modal-mask {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 999;
 }
-.form-box {
-  background: #fffdf9;
+.modal-box {
+  width: 460px;
+  background: #FFFDF9;
   border-radius: 20px;
-  padding: 32px;
-  width: 420px;
-  border: 2px dashed #E6D0B3;
+  border: 2px dashed #D4A373;
+  padding: 28px;
 }
-.form-box h3 {
-  text-align: center;
-  margin-bottom: 24px;
-  font-size: 22px;
+.modal-title {
+  font-size: 20px;
+  font-weight: bold;
   color: #5C3A21;
+  text-align: center;
+  margin-bottom: 22px;
 }
 .form-item {
   margin-bottom: 18px;
 }
 .form-item label {
   display: block;
-  margin-bottom: 6px;
-  font-weight: 500;
+  margin-bottom: 7px;
+  font-size: 14px;
   color: #44382e;
 }
-.form-item input,
-.form-item select {
+.red {
+  color: #d14343;
+}
+.form-item input {
   width: 100%;
-  padding: 10px 12px;
+  box-sizing: border-box;
   border: 1px solid #e6d0b3;
   border-radius: 10px;
-  font-size: 16px;
+  padding: 10px 12px;
+  font-size: 14px;
   background: #fffdf9;
 }
-.form-item input:focus,
-.form-item select:focus {
+.form-item input:focus {
   outline: none;
   border-color: #5C3A21;
 }
-.form-btn-group {
+.modal-btn-group {
   display: flex;
-  gap: 16px;
-  margin-top: 24px;
+  gap: 12px;
+  margin-top: 10px;
 }
-.btn-cancel {
+.btn {
   flex: 1;
-  padding: 12px;
-  border: 1px solid #E6D0B3;
-  background: #f3e9dd;
-  border-radius: 12px;
-  font-size: 16px;
+  height: 42px;
+  border-radius: 10px;
+  border: none;
   cursor: pointer;
+  font-weight: 600;
+}
+.btn.cancel {
+  background: #f3e9dd;
   color: #5C3A21;
 }
-.btn-submit {
-  flex: 1;
-  padding: 12px;
-  border: none;
+.btn.primary {
   background: linear-gradient(135deg, #8C5E38 0%, #D4A373 100%);
-  color: #fff;
-  border-radius: 12px;
-  font-size: 16px;
-  cursor: pointer;
+  color: white;
 }
-#avatarInput {
-  display: none;
+
+/*toast */
+.custom-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(29, 33, 41, 0.9);
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 8px;
+  font-size: 15px;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.25s ease;
+}
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -40%);
 }
 </style>
