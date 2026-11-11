@@ -1,491 +1,437 @@
 <template>
-  <div class="pet-archive-page">
+  <div class="page-wrap">
     <Header />
-    <div class="main-container">
-      <!--页面标题 -->
-      <div class="page-header">
-        <div class="header-left">
-          <div class="tape-title-img">
-            <img class="tape-bg-img" src="/jiaotiao5.png" alt="胶带背景" />
-            <h1>我的宠物档案</h1>
+
+    <div class="container">
+      <h2 class="page-title">我的宠物档案</h2>
+      <p class="page-desc">记录小动物基础信息、生日、种类、体重，一站式管理它的资料</p>
+      <div class="card-wrap">
+        <!-- 宠物卡片列表 -->
+        <div class="pet-card" v-for="(item, index) in petList" :key="index">
+          <div class="pet-avatar-wrap" @click="handleChangeAvatar(index)">
+            <img v-if="item.avatar" :src="item.avatar" alt="头像" />
+            <span v-else class="avatar-tip">点我上传<br />照片</span>
           </div>
-          <p>记录毛孩子基础信息，喂食、免疫AI分析将读取本档案数据</p>
-        </div>
-        <button class="add-btn" @click="openAddModal">➕新增宠物档案</button>
-      </div>
-
-      <!--顶部统计卡片 -->
-      <div class="stat-card">
-        <div class="stat-item">
-          <div class="num">{{ petList.length }}</div>
-          <div class="label">宠物总数量</div>
-        </div>
-        <div class="stat-item">
-          <div class="num">{{ catDogCount }}</div>
-          <div class="label">猫狗宠物</div>
-        </div>
-        <div class="stat-item">
-          <div class="num">{{ otherPetCount }}</div>
-          <div class="label">异宠（仓鼠/守宫/鸟类）</div>
-        </div>
-      </div>
-
-      <!--空状态 -->
-      <div v-if="petList.length === 0" class="empty-tip">
-        📭 暂无宠物档案，点击上方按钮创建第一条宠物档案
-      </div>
-
-      <!--宠物档案卡片列表 -->
-      <div class="card-wrap" v-else>
-        <div class="pet-card" v-for="pet in petList" :key="pet.id">
-          <div class="card-head">
-            <h3>{{ pet.name }}</h3>
-            <div class="card-operate">
-              <button class="edit-btn" @click="openEditModal(pet)">✏️编辑</button>
-              <button class="del-btn" @click="handleDelete(pet.id)">🗑️删除</button>
-            </div>
+          <div class="pet-name">{{ item.name }}</div>
+          <div class="pet-info">
+            种类：{{ item.breed }}<br />
+            生日：{{ item.birth }}<br />
+            性别：{{ item.gender }} | 体重：{{ item.weight }}kg
           </div>
-          <div class="card-body">
-            <div class="row-item">
-              <span class="label">品种：</span>
-              <span>{{ pet.breed }}</span>
-            </div>
-            <div class="row-item">
-              <span class="label">生日：</span>
-              <span>{{ pet.birth || "未填写" }}</span>
-            </div>
-            <div class="row-item">
-              <span class="label">年龄：</span>
-              <span>{{ getAgeByBirth(pet.birth) }} 岁</span>
-            </div>
-            <div class="row-item">
-              <span class="label">体重(kg)：</span>
-              <span>{{ pet.weight }}</span>
-            </div>
+          <div class="card-btn-group">
+            <button class="card-btn edit-btn" @click="openEdit(index)">修改</button>
+            <button class="card-btn del-btn" @click="delPet(index)">删除</button>
           </div>
         </div>
-      </div>
 
-      <!--弹窗：新增/编辑档案 -->
-      <transition name="modal">
-        <div v-if="modalShow" class="modal-mask" @click.self="closeModal">
-          <div class="modal-box">
-            <div class="modal-title">
-              {{ isEdit ? "编辑宠物档案" : "新增宠物档案" }}
-            </div>
-            <div class="form-item">
-              <label>宠物名字 <span class="red">*</span></label>
-              <input v-model="form.name" placeholder="例如：年糕" />
-            </div>
-            <div class="form-item">
-              <label>品种 <span class="red">*</span></label>
-              <input v-model="form.breed" placeholder="例如：布偶猫 / 金毛 / 豹纹守宫" />
-            </div>
-            <div class="form-item">
-              <label>生日</label>
-              <input type="date" v-model="form.birth" />
-            </div>
-            <div class="form-item">
-              <label>体重(kg) <span class="red">*</span></label>
-              <input type="number" step="0.01" min="0.01" v-model.number="form.weight" placeholder="例如3.2" />
-            </div>
-            <div class="modal-btn-group">
-              <button class="btn cancel" @click="closeModal">取消</button>
-              <button class="btn primary" @click="submitForm">保存</button>
-            </div>
-          </div>
+        <!-- 添加新宠物卡片 -->
+        <div class="pet-card add-card" @click="openAdd">
+          <div class="plus">+</div>
+          <div>添加新宠物</div>
         </div>
-      </transition>
-
-      <!--toast提示 -->
-      <transition name="slide-up">
-        <div v-if="toastMessage" class="custom-toast">{{ toastMessage }}</div>
-      </transition>
+      </div>
     </div>
+
+    <!-- 弹窗蒙版 -->
+    <div class="mask" v-show="maskVisible">
+      <div class="form-box">
+        <h3>{{ formTitle }}</h3>
+        <div class="form-item">
+          <label>宠物名字</label>
+          <input v-model="formData.name" type="text" placeholder="例如：元宝、多多" />
+        </div>
+        <div class="form-item">
+          <label>品种/种类</label>
+          <input v-model="formData.breed" type="text" placeholder="例如：布偶猫、金毛、泰迪、英短、橘猫" />
+        </div>
+        <div class="form-item">
+          <label>生日</label>
+          <input v-model="formData.birth" type="date" />
+        </div>
+        <div class="form-item">
+          <label>性别</label>
+          <select v-model="formData.gender">
+            <option value="公">公</option>
+            <option value="母">母</option>
+          </select>
+        </div>
+        <div class="form-item">
+          <label>体重(kg)</label>
+          <input v-model="formData.weight" type="number" step="0.1" placeholder="例如：4.5" />
+        </div>
+        <div class="form-btn-group">
+          <button class="btn-cancel" @click="closeMask">取消</button>
+          <button class="btn-submit" @click="submitForm">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 隐藏文件上传input -->
+    <input
+      ref="avatarInputRef"
+      id="avatarInput"
+      type="file"
+      accept="image/*"
+      @change="onAvatarFileChange"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import Header from "../components/Header.vue";
+import { ref, onMounted } from 'vue'
+import Header from '../components/Header.vue'
 
-const STORAGE_KEY = "petArchiveList";
+// 状态
+const maskVisible = ref(false)
+const formTitle = ref('添加宠物信息')
+const editIndex = ref(null)
+const currentAvatarIndex = ref(null)
+const avatarInputRef = ref(null)
 
-const petList = ref([]);
-const modalShow = ref(false);
-const isEdit = ref(false);
-const editId = ref(null);
-const toastMessage = ref("");
-let toastTimer = null;
+// 表单数据
+const formData = ref({
+  name: '',
+  breed: '',
+  birth: '',
+  gender: '公',
+  weight: ''
+})
 
-const form = ref({
-  name: "",
-  breed: "",
-  birth: "",
-  weight: null,
-});
+// 宠物列表，读取localStorage
+const petList = ref(JSON.parse(localStorage.getItem('petData')) || [])
 
-const catDogCount = computed(() => {
-  return petList.value.filter((p) => p.breed.includes("猫") || p.breed.includes("狗")).length;
-});
-const otherPetCount = computed(() => {
-  return petList.value.length - catDogCount.value;
-});
+// 保存到本地存储
+function saveData() {
+  localStorage.setItem('petData', JSON.stringify(petList.value))
+}
 
-function getAgeByBirth(birthStr) {
-  if (!birthStr) return "--";
-  const birth = new Date(birthStr);
-  const now = new Date();
-  let age = now.getFullYear() - birth.getFullYear();
-  const monthDiff = now.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
-    age--;
+// 关闭弹窗
+function closeMask() {
+  maskVisible.value = false
+}
+
+// 打开新增
+function openAdd() {
+  editIndex.value = null
+  formTitle.value = '添加宠物信息'
+  formData.value = {
+    name: '',
+    breed: '',
+    birth: '',
+    gender: '公',
+    weight: ''
   }
-  return age <= 0 ? 0.2 : age;
+  maskVisible.value = true
 }
 
-function saveLocal() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(petList.value));
+// 打开编辑
+function openEdit(index) {
+  editIndex.value = index
+  formTitle.value = '修改宠物信息'
+  const item = petList.value[index]
+  formData.value = {
+    name: item.name,
+    breed: item.breed,
+    birth: item.birth,
+    gender: item.gender,
+    weight: item.weight
+  }
+  maskVisible.value = true
 }
 
-function showToast(msg) {
-  toastMessage.value = msg;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toastMessage.value = "";
-  }, 2200);
+// 删除宠物
+function delPet(index) {
+  petList.value.splice(index, 1)
+  saveData()
 }
 
-function openAddModal() {
-  isEdit.value = false;
-  editId.value = null;
-  form.value = {
-    name: "",
-    breed: "",
-    birth: "",
-    weight: null,
-  };
-  modalShow.value = true;
+// 点击头像更换头像
+function handleChangeAvatar(index) {
+  currentAvatarIndex.value = index
+  avatarInputRef.value.click()
 }
 
-function openEditModal(pet) {
-  isEdit.value = true;
-  editId.value = pet.id;
-  form.value = {
-    name: pet.name,
-    breed: pet.breed,
-    birth: pet.birth,
-    weight: pet.weight,
-  };
-  modalShow.value = true;
+// 文件选择回调，FileReader转base64
+function onAvatarFileChange(e) {
+  const file = e.target.files[0]
+  if (!file || currentAvatarIndex.value === null) return
+  const reader = new FileReader()
+  reader.onload = function (ev) {
+    petList.value[currentAvatarIndex.value].avatar = ev.target.result
+    saveData()
+    currentAvatarIndex.value = null
+  }
+  reader.readAsDataURL(file)
+  // 清空input，防止选同一个图片不触发change
+  e.target.value = ''
 }
 
-function closeModal() {
-  modalShow.value = false;
-}
-
+// 表单提交保存
 function submitForm() {
-  if (!form.value.name) return showToast("请填写宠物名字");
-  if (!form.value.breed) return showToast("请填写品种");
-  if (!form.value.weight || Number(form.value.weight) <= 0) return showToast("请填写有效体重");
-
-  if (isEdit.value) {
-    const idx = petList.value.findIndex((i) => i.id === editId.value);
-    if (idx !== -1) {
-      petList.value[idx] = { ...petList.value[idx], ...form.value };
-    }
-    showToast("档案修改成功✅");
-  } else {
-    const newPet = {
-      id: Date.now(),
-      ...form.value,
-    };
-    petList.value.push(newPet);
-    showToast("档案创建成功✅");
+  const { name, breed, birth, weight } = formData.value
+  if (!name.trim() || !breed.trim() || !birth || !weight) {
+    alert('请填全所有信息！')
+    return
   }
-  saveLocal();
-  closeModal();
-}
 
-function handleDelete(id) {
-  petList.value = petList.value.filter((item) => item.id !== id);
-  saveLocal();
-  showToast("已删除该档案");
+  if (editIndex.value === null) {
+    // 新增
+    petList.value.push({
+      name: formData.value.name,
+      breed: formData.value.breed,
+      birth: formData.value.birth,
+      gender: formData.value.gender,
+      weight: formData.value.weight,
+      avatar: null
+    })
+  } else {
+    // 修改
+    const idx = editIndex.value
+    petList.value[idx].name = formData.value.name
+    petList.value[idx].breed = formData.value.breed
+    petList.value[idx].birth = formData.value.birth
+    petList.value[idx].gender = formData.value.gender
+    petList.value[idx].weight = formData.value.weight
+  }
+  saveData()
+  closeMask()
 }
 
 onMounted(() => {
-  const str = localStorage.getItem(STORAGE_KEY);
-  if (str) {
-    petList.value = JSON.parse(str);
-  }
-});
+  // 页面加载自动读取localStorage，ref初始化已经处理
+})
 </script>
 
-
 <style scoped>
-.pet-archive-page {
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+.page-wrap {
+  background-color: rgba(255, 249, 238, 0.65);
   min-height: 100vh;
-  background-image: url("/home_bg.jpg");
+}
+body {
+  background-image: url("public\dangan.png");
+  background-repeat: no-repeat;
+  background-position: center;
   background-size: cover;
   background-attachment: fixed;
-  background-color: rgba(253, 250, 245, 0.82);
-  background-blend-mode: overlay;
-  font-family: -apple-system, sans-serif;
+  color: #1a2b48;
 }
-.main-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 120px 20px 80px;
-}
-.page-header {
+header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 32px;
+  padding: 18px 80px;
 }
-.header-left {
-  position: relative;
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 24px;
+  font-weight: bold;
 }
-.tape-title-img {
-  position: relative;
-  display: inline-block;
-  margin-bottom: 12px;
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg,#ff7b63,#ffb86c);
+  border-radius: 8px;
 }
-.tape-bg-img {
-  width: 280px;
-  height: 60px;
-  display: block;
-  object-fit: contain;
+nav {
+  display: flex;
+  gap: 42px;
+  align-items: center;
 }
-.tape-title-img h1 {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin: 0;
-  font-size: 32px;
-  color: #5C3A21;
-  font-weight: 900;
-  letter-spacing: 1px;
-  white-space: nowrap;
+nav a {
+  text-decoration: none;
+  color: #444;
+  font-size: 17px;
+  padding: 6px 10px;
+  border-radius: 12px;
 }
-.header-left p {
-  font-size: 15px;
-  color: #8892A0;
-  margin: 0;
-  padding-left: 8px;
+nav a.active {
+  background: #ffe9cc;
+  color: #d47828;
 }
-.add-btn {
-  background: linear-gradient(135deg, #8C5E38 0%, #D4A373 100%);
-  color: #fff;
+.header-right {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.login-link {
+  color: #444;
+  text-decoration: none;
+  font-size: 16px;
+}
+.btn-dark {
+  background: #1a2b48;
+  color: white;
   border: none;
   padding: 12px 24px;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: bold;
-}
-.add-btn:hover {
-  transform: translateY(-2px);
-}
-
-/*统计卡片 */
-.stat-card {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 28px;
-}
-.stat-item {
-  flex-shrink: 0;
-  min-width: 160px;
-  background: #FFFDF9;
-  border: 2px dashed #D4A373;
-  border-radius: 16px;
-  padding: 18px 24px;
-  text-align: center;
-}
-.stat-item .num {
-  font-size: 32px;
-  font-weight: bold;
-  color: #5C3A21;
-  margin-bottom: 6px;
-}
-.stat-item .label {
-  font-size: 14px;
-  color: #8c6b4f;
-}
-
-.empty-tip {
-  text-align: center;
-  padding: 80px 0;
+  border-radius: 14px;
   font-size: 16px;
-  color: #8c6b4f;
+  cursor: pointer;
+}
+.container {
+  padding: 40px 80px;
+}
+.page-title {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+.page-desc {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 32px;
 }
 .card-wrap {
   display: grid;
-  grid-template-columns: repeat(auto-fill, min-max(340px, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
 }
 .pet-card {
-  background: #FFFDF9;
-  border: 2px dashed #D4A373;
-  border-radius: 20px;
+  background: #ffffff;
+  border-radius: 24px;
   padding: 24px;
-  transition: 0.25s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  position: relative;
+  text-align: center;
 }
-.pet-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.05);
-}
-.card-head {
+.pet-avatar-wrap{
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: #eee;
+  margin: 0 auto 16px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
-  border-bottom: 1px dashed #E6D0B3;
-  padding-bottom: 12px;
-}
-.card-head h3 {
-  margin: 0;
-  font-size: 22px;
-  color: #5C3A21;
-}
-.card-operate {
-  display: flex;
-  gap: 8px;
-}
-.edit-btn {
-  border: none;
-  background: #e8f3ff;
-  color: #0052D9;
-  border-radius: 6px;
-  padding: 4px 8px;
-  cursor: pointer;
-  font-size: 12px;
-}
-.del-btn {
-  border: none;
-  background: #ffe9e9;
-  color: #d14343;
-  border-radius: 6px;
-  padding: 4px 8px;
-  cursor: pointer;
-  font-size: 12px;
-}
-.row-item {
-  display: flex;
-  margin-bottom: 10px;
-  font-size: 15px;
-}
-.row-item .label {
-  color: #5C3A21;
-  font-weight: bold;
-  width: 90px;
-  flex-shrink: 0;
-}
-
-/*弹窗 */
-.modal-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
   justify-content: center;
-  align-items: center;
-  z-index: 999;
+  overflow: hidden;
+  cursor: pointer;
 }
-.modal-box {
-  width: 460px;
-  background: #FFFDF9;
-  border-radius: 20px;
-  border: 2px dashed #D4A373;
-  padding: 28px;
+.pet-avatar-wrap img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
 }
-.modal-title {
+.avatar-tip{
+  font-size:13px;
+  color:#999;
+  text-align:center;
+}
+.pet-name {
   font-size: 20px;
   font-weight: bold;
-  color: #5C3A21;
-  text-align: center;
-  margin-bottom: 22px;
+  margin-bottom: 8px;
 }
-.form-item {
-  margin-bottom: 18px;
-}
-.form-item label {
-  display: block;
-  margin-bottom: 7px;
+.pet-info {
+  color: #666;
   font-size: 14px;
-  color: #44382e;
+  line-height: 1.8;
+  margin-bottom:16px;
 }
-.red {
-  color: #d14343;
+.card-btn-group{
+  display:flex;
+  gap:10px;
+  justify-content:center;
 }
-.form-item input {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #e6d0b3;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
-  background: #fffdf9;
+.card-btn{
+  padding:6px 12px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  font-size:14px;
 }
-.form-item input:focus {
-  outline: none;
-  border-color: #5C3A21;
+.edit-btn{
+  background:#ffe9cc;
+  color:#d47828;
 }
-.modal-btn-group {
+.del-btn{
+  background:#ffeeee;
+  color:#c83c3c;
+}
+.add-card {
+  border: 2px dashed #ffd299;
+  border-radius: 24px;
   display: flex;
-  gap: 12px;
-  margin-top: 10px;
-}
-.btn {
-  flex: 1;
-  height: 42px;
-  border-radius: 10px;
-  border: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  color: #d47828;
   cursor: pointer;
-  font-weight: 600;
+  background: #ffffff44;
 }
-.btn.cancel {
-  background: #f3e9dd;
-  color: #5C3A21;
+.add-card .plus{
+  font-size:32px;
+  margin-bottom:8px;
 }
-.btn.primary {
-  background: linear-gradient(135deg, #8C5E38 0%, #D4A373 100%);
-  color: white;
-}
-
-/*toast */
-.custom-toast {
+.mask {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(29, 33, 41, 0.9);
-  color: #fff;
-  padding: 12px 22px;
-  border-radius: 8px;
-  font-size: 15px;
-  z-index: 9999;
-  backdrop-filter: blur(4px);
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index:999;
 }
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
+.form-box {
+  background:#fff;
+  border-radius:20px;
+  padding:32px;
+  width:420px;
 }
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.25s ease;
+.form-box h3{
+  text-align:center;
+  margin-bottom:24px;
+  font-size:22px;
 }
-.slide-up-enter-active,
-.slide-up-leave-active {
-  transition: all 0.3s ease;
+.form-item{
+  margin-bottom:18px;
 }
-.slide-up-enter-from,
-.slide-up-leave-to {
-  opacity: 0;
-  transform: translate(-50%, -40%);
+.form-item label{
+  display:block;
+  margin-bottom:6px;
+  font-weight:500;
+}
+.form-item input, .form-item select{
+  width:100%;
+  padding:10px 12px;
+  border:1px solid #ddd;
+  border-radius:10px;
+  font-size:16px;
+}
+.form-btn-group{
+  display:flex;
+  gap:16px;
+  margin-top:24px;
+}
+.btn-cancel{
+  flex:1;
+  padding:12px;
+  border:1px solid #ccc;
+  background:#fff;
+  border-radius:12px;
+  font-size:16px;
+  cursor:pointer;
+}
+.btn-submit{
+  flex:1;
+  padding:12px;
+  border:none;
+  background:#1a2b48;
+  color:#fff;
+  border-radius:12px;
+  font-size:16px;
+  cursor:pointer;
+}
+#avatarInput{
+  display:none;
 }
 </style>

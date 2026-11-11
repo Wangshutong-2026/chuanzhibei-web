@@ -34,7 +34,13 @@ const routes = [
   path:'/feed',
   name:'Feed',
   component: () => import('../views/Feed.vue')
+  },
+  {
+  path: '/calendar',
+  name: 'Calendar',
+  component: () => import('../views/Calendar.vue')
   }
+
 
 
   // ⚠️ 下面这些等你建好对应的空文件了，再把它们解除注释：
