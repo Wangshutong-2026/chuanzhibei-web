@@ -1,25 +1,31 @@
 <template>
   <div class="bill-page">
     <div class="container">
-      <div class="page-header">
-        <h2 class="title-animate">💰 养宠日常账本</h2>
-        <p class="subtitle subtitle-animate">
-          记录每一笔养宠开销，让陪伴更安心、更清楚。
-        </p >
-
-        <div class="title-divider">
-          <span class="dot"></span>
-          <span class="line line-left"></span>
-          <span class="heart">🐾</span>
-          <span class="line line-right"></span>
-          <span class="dot"></span>
+      <!-- 标题区：和养护百科、宠物档案结构完全一致 -->
+      <div class="section-header-wrap">
+        <div class="tape-title-img">
+          <img src="/jiaotiao2.png" alt="胶布背景" />
+          <h2>💰 养宠日常账本</h2>
         </div>
+        <p class="section-subtitle">记录每一笔养宠开销，让陪伴更安心、更清楚。</p>
       </div>
 
       <div class="add-bill-card card-animate">
         <h3>新增消费记录</h3>
-
         <div class="form-row">
+          <div class="form-item">
+            <label>选择养护宠物</label>
+            <select v-model="selectedPetId">
+              <option v-if="petList.length === 0" value="" disabled>暂无宠物档案，请先去创建</option>
+              <option
+                v-for="pet in petList"
+                :key="pet.id"
+                :value="pet.id"
+              >
+                {{ pet.name }}
+              </option>
+            </select>
+          </div>
           <div class="form-item">
             <label>消费类别</label>
             <select v-model="form.type">
@@ -30,30 +36,27 @@
               <option value="其他">其他开销</option>
             </select>
           </div>
-
           <div class="form-item">
             <label>金额（元）</label>
             <input type="number" v-model="form.money" placeholder="输入金额" />
           </div>
-
           <div class="form-item">
             <label>消费日期</label>
             <input type="date" v-model="form.date" />
           </div>
-
           <div class="form-item">
             <label>备注</label>
             <input type="text" v-model="form.remark" placeholder="例如：猫粮一袋" />
           </div>
         </div>
-
         <button class="add-btn" @click="addBill">添加记录</button>
       </div>
 
       <div class="bill-list-card card-animate">
         <h3>📋 账单记录</h3>
-        <p class="current-pet-tip">当前养护宠物：{{ currentPetName }}</p >
-
+        <p class="current-pet-tip" v-if="currentSelectPetName">
+          当前养护宠物：{{ currentSelectPetName }}
+        </p>
         <div class="bill-table">
           <div class="table-head">
             <span>日期</span>
@@ -62,22 +65,20 @@
             <span>备注</span>
             <span>操作</span>
           </div>
-
           <div
             class="table-row"
             v-for="(item, index) in petBillList"
-            :key="index"
+            :key="item.id"
           >
             <span>{{ item.date }}</span>
             <span>{{ item.type }}</span>
             <span class="money">{{ item.money }} 元</span>
             <span>{{ item.remark }}</span>
             <span>
-              <button class="del-btn" @click="delBill(index)">删除</button>
+              <button class="del-btn" @click="delBill(item.id)">删除</button>
             </span>
           </div>
         </div>
-
         <div class="stat-area">
           <div class="stat-item">累计花费：<b>{{ totalMoney }} 元</b></div>
           <div class="stat-item">本月花费：<b>{{ monthMoney }} 元</b></div>
@@ -89,14 +90,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-const props = defineProps({
-  currentPetName: {
-    type: String,
-    default: "橘猫"
-  }
-})
+const petList = ref([])
+const selectedPetId = ref('')
 
 const form = ref({
   type: '粮品',
@@ -106,11 +103,45 @@ const form = ref({
 })
 
 const allBillList = ref([])
+const BILL_KEY = 'petBillList'
+const PET_ARCHIVE_KEY = 'petArchiveList'
+
+// 读取宠物档案
+function loadPetList() {
+  const raw = localStorage.getItem(PET_ARCHIVE_KEY)
+  petList.value = raw ? JSON.parse(raw) : []
+  // 给旧宠物补id
+  petList.value = petList.value.map(pet => {
+    if (!pet.id) {
+      pet.id = Date.now().toString()
+    }
+    return pet
+  })
+  // 如果选中的宠物已经被删掉，才切换；保留用户自己选的，不要乱覆盖
+  const hasSelectPet = petList.value.some(p => p.id === selectedPetId.value)
+  if (petList.value.length > 0 && !hasSelectPet) {
+    selectedPetId.value = petList.value[0].id
+  }
+}
+
+// 读取账单
+function loadBillData() {
+  const raw = localStorage.getItem(BILL_KEY)
+  allBillList.value = raw ? JSON.parse(raw) : []
+}
+
+function saveBillData() {
+  localStorage.setItem(BILL_KEY, JSON.stringify(allBillList.value))
+}
+
+const currentSelectPetName = computed(() => {
+  const pet = petList.value.find(p => p.id === selectedPetId.value)
+  return pet ? pet.name : ''
+})
 
 const petBillList = computed(() => {
-  return allBillList.value.filter(
-    item => item.petName === props.currentPetName
-  )
+  if (!selectedPetId.value) return []
+  return allBillList.value.filter(bill => bill.petId === selectedPetId.value)
 })
 
 const totalMoney = computed(() => {
@@ -119,315 +150,224 @@ const totalMoney = computed(() => {
 
 const monthMoney = computed(() => {
   const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
   return petBillList.value
     .filter(item => {
-      const d = item.date.split('-')
-      return d[0] == year && d[1] == month
+      const dArr = item.date.split('-')
+      return dArr[0] == y && dArr[1] == m
     })
     .reduce((sum, item) => sum + Number(item.money), 0)
 })
 
 const yearMoney = computed(() => {
   const now = new Date()
-  const year = now.getFullYear()
-
+  const y = now.getFullYear()
   return petBillList.value
-    .filter(item => {
-      const d = item.date.split('-')
-      return d[0] == year
-    })
+    .filter(item => item.date.startsWith(String(y)))
     .reduce((sum, item) => sum + Number(item.money), 0)
 })
 
 const addBill = () => {
+  if (!selectedPetId.value) {
+    alert('请先选择宠物！')
+    return
+  }
   if (!form.value.money || !form.value.date) {
     alert('请填写金额和日期')
     return
   }
-
   allBillList.value.push({
-    petName: props.currentPetName,
+    id: Date.now().toString(),
+    petId: selectedPetId.value,
     type: form.value.type,
     money: Number(form.value.money),
     date: form.value.date,
     remark: form.value.remark
   })
-
+  saveBillData()
   form.value.money = ''
   form.value.remark = ''
 }
 
-const delBill = (index) => {
-  const realIndex = allBillList.value.findIndex(
-    item => item === petBillList.value[index]
-  )
-  allBillList.value.splice(realIndex, 1)
+const delBill = (billId) => {
+  allBillList.value = allBillList.value.filter(item => item.id !== billId)
+  saveBillData()
 }
+
+// storage监听，跨标签页更新
+function handleStorageChange() {
+  loadPetList()
+  loadBillData()
+}
+
+onMounted(() => {
+  loadPetList()
+  loadBillData()
+  window.addEventListener('storage', handleStorageChange)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('storage', handleStorageChange)
+})
 </script>
 
 <style scoped>
 .bill-page {
-  width: 100%;
-  min-height: calc(100vh - 72px);
-  background: url("/bill-bg.jpg");
-  background-size: 100% 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-  padding: 40px 24px;
-  box-sizing: border-box;
+  min-height: 100vh;
+  background-image: url("/home_bg.jpg");
+  background-size: cover;
+  background-attachment: fixed;
+  background-color: rgba(253, 250, 245, 0.82);
+  background-blend-mode: overlay;
+  font-family: -apple-system, sans-serif;
+  padding-top: 120px;
 }
-
 .container {
-  width: 100%;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 0 20px 80px;
 }
-
-.page-header {
-  margin-bottom: 34px;
+.section-header-wrap {
   text-align: center;
+  margin-bottom: 60px;
+  position: relative;
+  z-index: 10;
 }
-
-.page-header h2 {
-  font-size: 30px;
-  color: #ff6b35;
-  font-weight: 800;
-  margin: 0 0 10px 0;
-  letter-spacing: 0.5px;
-}
-
-.subtitle {
-  font-size: 16px;
-  color: #ff8c42;
-  font-weight: 600;
-  margin-bottom: 18px;
-  letter-spacing: 0.5px;
-}
-
-.title-divider {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.title-divider .line {
-  width: 90px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #ffb347, transparent);
-}
-
-.title-divider .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #ffb347;
-  box-shadow: 0 0 8px rgba(255, 179, 71, 0.8);
-}
-
-.title-divider .heart {
-  font-size: 18px;
-  animation: heartbeat 1.4s ease-in-out infinite;
-}
-
-.title-animate {
-  animation: fadeDown 0.8s ease-out both;
-}
-
-.subtitle-animate {
-  animation: fadeDown 1s ease-out 0.15s both;
-}
-
-.card-animate {
-  animation: fadeUp 0.9s ease-out both;
-}
-
-.card-animate:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.card-animate:nth-child(3) {
-  animation-delay: 0.35s;
-}
-
-.add-bill-card,
-.bill-list-card {
-  background: rgba(255, 255, 255, 0.88);
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(255, 179, 71, 0.25);
-}
-
-.add-bill-card h3,
-.bill-list-card h3 {
-  font-size: 18px;
-  color: #333;
-  margin: 0 0 16px 0;
-}
-
-.current-pet-tip {
-  color: #888;
-  font-size: 14px;
+.tape-title-img {
+  position: relative;
+  display: inline-block;
   margin-bottom: 12px;
 }
-
+.tape-title-img img {
+  width: 280px;
+  height: auto;
+  opacity: 0.9;
+  display: block;
+}
+.tape-title-img h2 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font-size: 24px;
+  color: #5C3A21;
+  font-weight: 900;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+.section-subtitle {
+  font-size: 16px;
+  color: #8892A0;
+  margin-top: 10px;
+}
+.card-animate {
+  background: #FFFDF9;
+  border: 2px dashed #D4A373;
+  border-radius: 20px;
+  padding: 26px;
+  margin-bottom: 24px;
+}
+.card-animate h3 {
+  margin: 0 0 20px;
+  font-size: 18px;
+  color: #5C3A21;
+}
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1.4fr;
-  gap: 16px;
-  align-items: end;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap:16px;
 }
-
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap:8px;
+}
 .form-item label {
-  display: block;
-  margin-bottom: 6px;
-  color: #444;
-  font-size: 14px;
+  font-size:14px;
+  color:#44382e;
 }
-
 .form-item input,
 .form-item select {
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 9px 12px;
-  font-size: 15px;
-  background: #fff;
+  width:100%;
   box-sizing: border-box;
-  transition: 0.25s ease;
+  border:1px solid #e6d0b3;
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:14px;
+  background:#fffdf9;
 }
-
 .form-item input:focus,
 .form-item select:focus {
   outline: none;
-  border-color: #ffb347;
-  box-shadow: 0 0 0 3px rgba(255, 179, 71, 0.15);
+  border-color: #5C3A21;
 }
-
 .add-btn {
-  background: linear-gradient(135deg, #ffb347, #ff6b35);
-  border: none;
-  color: #fff;
-  padding: 10px 22px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  margin-top: 16px;
-  transition: 0.25s ease;
+  margin-top:20px;
+  width:100%;
+  height:44px;
+  border-radius:10px;
+  border:none;
+  background: linear-gradient(135deg, #8C5E38 0%, #D4A373 100%);
+  color:#fff;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  transition:0.25s;
 }
-
 .add-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(255, 107, 53, 0.35);
 }
-
+.current-pet-tip {
+  font-size:14px;
+  color:#5C3A21;
+  margin-bottom:16px;
+}
 .bill-table {
-  margin-top: 16px;
+  width:100%;
 }
-
-.table-head,
-.table-row {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr 2fr 0.8fr;
-  padding: 12px 8px;
-  align-items: center;
-}
-
 .table-head {
-  font-weight: bold;
-  color: #444;
-  border-bottom: 1px solid #eee;
-  background: #fdf8ee;
-  border-radius: 10px 10px 0 0;
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr 2fr 100px;
+  font-weight:bold;
+  padding:12px 8px;
+  color:#5C3A21;
+  border-bottom:1px dashed #E6D0B3;
 }
-
 .table-row {
-  border-bottom: 1px solid #f3f3f3;
-  transition: 0.25s ease;
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr 2fr 100px;
+  padding:12px 8px;
+  border-bottom:1px dashed #F3E9DD;
+  align-items:center;
+  font-size:14px;
+  color:#4E5969;
 }
-
-.table-row:hover {
-  background: #fffaf0;
-  transform: scale(1.005);
-}
-
 .money {
-  color: #d97706;
-  font-weight: bold;
+  color:#c83c3c;
+  font-weight:bold;
 }
-
 .del-btn {
-  color: #ef4444;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: 0.25s ease;
+  border:none;
+  background:#ffeeee;
+  color:#c83c3c;
+  border-radius:6px;
+  padding:4px 8px;
+  cursor:pointer;
+  font-size:12px;
 }
-
-.del-btn:hover {
-  color: #b91c1c;
-}
-
 .stat-area {
-  margin-top: 20px;
-  display: flex;
-  gap: 30px;
-  font-size: 16px;
-  flex-wrap: wrap;
+  margin-top:20px;
+  display:flex;
+  gap:24px;
+  flex-wrap:wrap;
 }
-
 .stat-item {
-  background: #fdf4e3;
-  padding: 12px 18px;
-  border-radius: 10px;
-  color: #444;
-  transition: 0.25s ease;
+  font-size:15px;
+  color:#4E5969;
 }
-
-.stat-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(255, 179, 71, 0.25);
-}
-
 .stat-item b {
-  color: #c47b28;
-  margin-left: 6px;
-}
-
-@keyframes fadeDown {
-  from {
-    opacity: 0;
-    transform: translateY(-12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes heartbeat {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.18);
-  }
+  color:#5C3A21;
 }
 </style>

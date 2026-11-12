@@ -6,7 +6,7 @@
       <div class="page-header">
         <div class="header-left">
           <div class="tape-title-img">
-            <img class="tape-bg-img" src="/jiaotiao5.png" alt="胶带背景" />
+            <img class="tape-bg-img" src="/jiaotiao3.png" alt="胶带背景" />
             <h1>每日喂食记录</h1>
           </div>
           <p>记录毛孩子每日饮食，掌握喂食频率，预防过饥过饱</p>

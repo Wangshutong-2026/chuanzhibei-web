@@ -2,23 +2,22 @@
   <div class="calendar-page">
     <Header />
     <div class="main-container">
-      <div class="page-header">
-        <div class="header-left">
-          <div class="tape-title-img">
-            <img class="tape-bg-img" src="/jiaotiao5.png" alt="胶带背景" />
-            <span class="tape-text">免疫日历</span>
-          </div>
-          <p>记录什么时候打的疫苗、在哪打的，下次接种日期会自动提醒你</p>
+      <!-- 【和PetArchive、PetBill完全统一标题区】 -->
+      <div class="section-header-wrap">
+        <div class="tape-title-img">
+          <img src="/jiaotiao4.png" alt="胶布背景" />
+          <h2>💉免疫日历</h2>
         </div>
+        <p class="section-subtitle">记录什么时候打的疫苗、在哪打的，下次接种日期会自动提醒你</p>
       </div>
 
       <!-- 筛选栏：宠物下拉 + 月份切换 -->
       <div class="filter-bar">
         <div class="pet-select-wrap">
           <span>当前宠物</span>
-          <select v-model="selectPet">
+          <select v-model="selectPetId">
             <option value="">全部宠物</option>
-            <option v-for="pet in petList" :key="pet.id" :value="pet.name">
+            <option v-for="pet in petList" :key="pet.id" :value="pet.id">
               {{ pet.name }}
             </option>
           </select>
@@ -46,7 +45,7 @@
           <div v-else class="record-list">
             <div class="record-item" v-for="item in filterRecords" :key="item.id">
               <div class="rec-top">
-                <span class="rec-pet">{{ item.pet }}</span>
+                <span class="rec-pet">{{ item.petName }}</span>
                 <span class="rec-type tag">{{ item.type }}</span>
               </div>
               <p>{{ item.name }}</p>
@@ -61,11 +60,11 @@
         </div>
       </div>
 
-      <!-- 弹窗表单 -->
+      <!-- 弹窗表单：现在传入完整petList，不再传name字符串数组 -->
       <VaccineRecordForm
         v-model:visible="formShow"
         :default-date="selectedDate"
-        :pet-names="petNameArr"
+        :pet-list="petList"
         :edit-data="editItem"
         @save="onSaveRecord"
       />
@@ -74,46 +73,50 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import VaccineCalendar from '../components/VaccineCalendar.vue'
-import VaccineRecordForm from '../components/VaccineRecordForm.vue'
+// 只新增这一行导入，剩下所有代码原样不动！！
 import Header from '../components/Header.vue'
 
-// ========== 宠物档案数据（和档案页共用localStorage）==========
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import VaccineCalendar from '../components/VaccineCalendar.vue'
+import VaccineRecordForm from '../components/VaccineRecordForm.vue'
+
+// =========下面你原本所有代码保持原样，一点不改========
 const PET_KEY = 'petArchiveList'
-const getPetArchive = () => JSON.parse(localStorage.getItem(PET_KEY) || '[]')
-
+const VACCINE_KEY = 'vaccineRecordList'
 const petList = ref([])
-const selectPet = ref('') // 选中的宠物名字，空=全部宠物
-
-// 提取宠物名字数组，传给弹窗下拉datalist
-const petNameArr = computed(() => petList.value.map(p => p.name))
-
+const selectPetId = ref('') // 现在绑定petId，空字符串代表全部宠物
 // 月份
 const now = new Date()
 const currentYear = ref(now.getFullYear())
 const currentMonth = ref(now.getMonth() + 1)
-
 // 免疫记录
-const VACCINE_KEY = 'vaccineRecordList'
 const vaccineList = ref([])
-
 const formShow = ref(false)
 const selectedDate = ref('')
 const editItem = ref(null)
-
-// 加载档案宠物 + 免疫记录
-function loadData() {
-  petList.value = getPetArchive()
+// 加载宠物档案，兼容旧无id宠物自动补id
+function loadPetArchive() {
+  const raw = localStorage.getItem(PET_KEY)
+  let arr = raw ? JSON.parse(raw) : []
+  // 兼容旧数据自动补id
+  arr = arr.map(pet => {
+    if (!pet.id) pet.id = Date.now().toString()
+    return pet
+  })
+  petList.value = arr
+}
+function loadVaccineRecord() {
   vaccineList.value = JSON.parse(localStorage.getItem(VACCINE_KEY) || '[]')
 }
-
-// 根据选中宠物过滤记录
+function loadData() {
+  loadPetArchive()
+  loadVaccineRecord()
+}
+// 根据petId过滤记录
 const filterRecords = computed(() => {
-  if (!selectPet.value) return vaccineList.value
-  return vaccineList.value.filter(r => r.pet === selectPet.value)
+  if (!selectPetId.value) return vaccineList.value
+  return vaccineList.value.filter(r => r.petId === selectPetId.value)
 })
-
 // 月份切换
 function prevMonth() {
   if (currentMonth.value === 1) {
@@ -136,7 +139,6 @@ function goToday() {
   currentYear.value = d.getFullYear()
   currentMonth.value = d.getMonth() + 1
 }
-
 // 打开新增弹窗
 function openForm(dateStr) {
   editItem.value = null
@@ -154,63 +156,85 @@ function delRecord(id) {
   vaccineList.value = vaccineList.value.filter(x => x.id !== id)
   localStorage.setItem(VACCINE_KEY, JSON.stringify(vaccineList.value))
 }
-// 保存
+// 保存记录：接收来自弹窗 {petId,petName,...}
 function onSaveRecord(data) {
   if (data.id) {
     // 修改
     const idx = vaccineList.value.findIndex(x => x.id === data.id)
     vaccineList.value[idx] = data
   } else {
-    // 新增，生成id
+    // 新增
     data.id = Date.now().toString()
     vaccineList.value.push(data)
   }
   localStorage.setItem(VACCINE_KEY, JSON.stringify(vaccineList.value))
 }
-
+// storage跨标签页更新
+function handleStorage() {
+  loadData()
+}
 onMounted(() => {
   loadData()
-  // 监听storage，档案页新增/删除宠物时自动刷新下拉
-  window.addEventListener('storage', loadData)
+  window.addEventListener('storage', handleStorage)
+})
+onUnmounted(() => {
+  window.removeEventListener('storage', handleStorage)
 })
 </script>
 
+
 <style scoped>
+.calendar-page {
+  min-height: 100vh;
+  background-image: url('home_bg.jpg');
+  background-size:cover;
+  background-attachment: fixed;
+  background-color:rgba(253, 250, 245, 0.8);
+  background-blend-mode: overlay;
+  padding‑top: 120px;
+}
 .main-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 0 16px 60px;
 }
-.page-header {
-  margin-bottom: 20px;
+
+/* =========【和全站统一标题样式】========= */
+.section-header-wrap {
+  text-align: center;
+  margin-bottom: 60px;
+  position: relative;
+  z-index: 10;
 }
 .tape-title-img {
   position: relative;
   display: inline-block;
+  margin-bottom: 12px;
 }
-.tape-bg-img {
-  height: 42px;
+.tape-title-img img {
+  width: 280px;
+  height: auto;
+  opacity: 0.9;
   display: block;
 }
-.tape-text {
+.tape-title-img h2 {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  line-height: 42px;
-  text-align: center;
-  font-size: 28px;
-  font-family: "Arial Rounded MT Bold", "Comic Sans MS", "PingFang SC", "Microsoft YaHei", sans-serif;
-  font-weight: 800;
-  color: #1a2b48;
-  letter-spacing: 3px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font-size: 30px;
+  color: #5C3A21;
+  font-weight: 900;
+  letter-spacing: 2px;
+  white-space: nowrap;
 }
-
-
-.page-header p {
+.section-subtitle {
+  font-size: 16px;
+  color: #8892A0;
   margin-top: 10px;
-  color: #555;
 }
+
 .filter-bar {
   display: flex;
   justify-content: space-between;

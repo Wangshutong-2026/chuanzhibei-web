@@ -1,7 +1,6 @@
 <template>
   <div class="home-page">
     <Header />
-
     <div class="main-container">
       <!-- 1. Hero 区 -->
       <section class="hero-section">
@@ -15,7 +14,6 @@
           <p>从嗷嗷待哺到步履蹒跚，用数据定格它的成长轨迹，做它最合格的铲屎官。</p>
           <button class="cta-btn" @click="router.push('/pets')">立即创建档案 →</button>
         </div>
-
         <div class="hero-visual">
           <div class="sticker main-sticker"><img src="/tiezhi1.png" alt="主宠物" /></div>
           <div class="sticker small-sticker s1"><img src="/tiezhi2.png" alt="小宠物1" /></div>
@@ -28,16 +26,6 @@
         </div>
         <img class="bottom-left-sticker" src="/tiezhi5.png" alt="破形装饰" />
       </section>
-
-      <!-- 空状态提示：没有宠物档案 -->
-      <section v-if="petArchiveList.length === 0" class="empty-warn-section">
-        <div class="empty-card">
-          <h3>👋 还没有宠物档案</h3>
-          <p>请先创建宠物档案，开启全部养护功能</p>
-          <button class="empty-btn" @click="router.push('/pets')">去创建宠物档案</button>
-        </div>
-      </section>
-
       <!-- ================= 2. 贴心养护服务 (便利贴版) ================= -->
       <section class="services-section">
         <img src="/bird.png" class="corner-decor top-left" alt="小鸟" />
@@ -49,7 +37,6 @@
           </div>
           <p class="section-subtitle">陪伴它的每一个重要时刻，我们都在</p>
         </div>
-
         <div class="services-container">
           <div class="service-card" style="--bg-color: #FFE4EC;" @click="router.push('/pets')">
             <div class="sticker-icon" style="--icon-color: #FF7A9E;">
@@ -62,7 +49,6 @@
               <span>头像上传</span>
             </div>
           </div>
-
           <div class="service-card" style="--bg-color: #E0F6E9;" @click="router.push('/feed')">
             <div class="sticker-icon" style="--icon-color: #3DBE7B;">
               <svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
@@ -74,7 +60,6 @@
               <span>喂食统计</span>
             </div>
           </div>
-
           <!-- 免疫日历卡片：待办>0显示小红点 -->
           <div class="service-card" style="--bg-color: #E1F0FF;" @click="router.push('/calendar')">
             <div v-if="soonExpireImmCount > 0" class="tip-dot"></div>
@@ -88,7 +73,6 @@
               <span>健康记录</span>
             </div>
           </div>
-
           <div class="service-card" style="--bg-color: #FFF3D6;" @click="router.push('/bill')">
             <div class="sticker-icon" style="--icon-color: #FFB020;">
               <svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -113,7 +97,6 @@
           </div>
         </div>
       </section>
-
       <!-- ================= 3. 全生命周期时间轴 (曲线版) ================= -->
       <section class="timeline-section">
         <div class="section-header-wrap">
@@ -187,7 +170,6 @@
           </div>
         </div>
       </section>
-
       <!-- ================= 4. 养宠知识情报站 ================= -->
       <section class="news-section">
         <div class="section-header-wrap">
@@ -215,7 +197,6 @@
                 <p>仓鼠领地意识极强，合笼极易导致惨烈打架。系统在建立异宠档案时，会自动向新手主人推送“单笼独居”的预警提示。</p>
                 <span class="read-more">阅读更多 →</span>
               </div>
-
               <div class="news-card small-card" @click="router.push('/news')" style="cursor: pointer;">
                 <div class="news-tag" style="background: #E0F6E9; color: #3DBE7B;">环境温控</div>
                 <h3>豹纹守宫缺钙怎么补？</h3>
@@ -229,7 +210,6 @@
           </div>
         </div>
       </section>
-
       <!-- 🔵第三优先级：AI健康日报【静态占位，仅答辩展望，不调用后端】 -->
       <section class="ai-preview-section">
         <div class="ai-preview-card">
@@ -237,43 +217,6 @@
           <p class="ai-preview-desc">整合宠物档案、喂食、免疫驱虫数据，AI生成每日健康总结，本功能将在后续迭代接入大模型接口。</p>
         </div>
       </section>
-
-      <!-- ================= 5. 数据看板（读取本地真实数据） ================= -->
-      <section class="stats-section">
-        <img src="/bird2.png" class="stats-bird" alt="小鸟贴纸" />
-        <div class="stats-container">
-          <div class="stat-item">
-            <h3>{{ petArchiveList.length }}</h3>
-            <p>已建立宠物档案</p>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <h3>{{ todayFeedCount }}</h3>
-            <p>今日喂食记录</p>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <h3>{{ feedList.length }}</h3>
-            <p>全部喂食记录</p>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <h3>¥{{ monthTotal }}</h3>
-            <p>本月养宠开销</p>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <h3>¥{{ allBillTotal }}</h3>
-            <p>累计全部开销</p>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <h3>{{ soonExpireImmCount }}</h3>
-            <p>7天内免疫驱虫待办</p>
-          </div>
-        </div>
-      </section>
-
       <!-- ================= 6. 底部行动号召 ================= -->
       <section class="cta-section">
         <div class="cta-card">
@@ -291,72 +234,45 @@
     </div>
   </div>
 </template>
-
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Header from '../components/Header.vue'
-
 const router = useRouter()
 
-// 宠物档案
 const petArchiveList = ref([])
-// 喂食记录
-const feedList = ref([])
-// 账本记录
-const billList = ref([])
-// 免疫驱虫记录
 const immuneList = ref([])
 
-// 今日喂食次数
-const todayFeedCount = computed(() => {
-  const todayStr = new Date().toLocaleDateString()
-  return feedList.value.filter(item => {
-    return new Date(item.feedTime).toLocaleDateString() === todayStr
-  }).length
-})
+// 只读取小红点 +空状态需要的数据
+function loadBaseData() {
+  const petStr = localStorage.getItem('petArchiveList')
+  petArchiveList.value = petStr ? JSON.parse(petStr) : []
 
-// 账本统计
-const now = new Date()
-const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`
-const monthBillList = computed(()=>{
-  return billList.value.filter(bill=> bill.billTime && bill.billTime.startsWith(currentMonthStr))
-})
-const monthTotal = computed(()=>{
-  return monthBillList.value.reduce((sum,item)=> sum + Number(item.money||0),0).toFixed(2)
-})
-const allBillTotal = computed(()=>{
-  return billList.value.reduce((sum,item)=> sum + Number(item.money||0),0).toFixed(2)
-})
+  const immuneStr = localStorage.getItem('vaccineRecordList')
+  immuneList.value = immuneStr ? JSON.parse(immuneStr) : []
+}
 
-// 7天内即将到期免疫驱虫待办
-const soonExpireImmCount = computed(()=>{
-  if(!immuneList.value.length) return 0
+// 只用于首页服务卡片小红点
+const soonExpireImmCount = ref(0)
+function calcImmTodo() {
+  if(!immuneList.value.length){
+    soonExpireImmCount.value = 0
+    return
+  }
   const nowTime = new Date()
   const sevenDayLater = new Date(Date.now() + 7*24*60*60*1000)
-  return immuneList.value.filter(item=>{
-    if(!item.nextTime) return false
-    const t = new Date(item.nextTime)
+  soonExpireImmCount.value = immuneList.value.filter(item=>{
+    if(!item.next) return false
+    const t = new Date(item.next)
     return t >= nowTime && t <= sevenDayLater
   }).length
-})
+}
 
 onMounted(() => {
-  // 读取宠物档案
-  const petStr = localStorage.getItem('petArchiveList')
-  if(petStr) petArchiveList.value = JSON.parse(petStr)
-  // 读取喂食记录
-  const feedStr = localStorage.getItem('feedRecord')
-  if(feedStr) feedList.value = JSON.parse(feedStr)
-  // 读取账本
-  const billStr = localStorage.getItem('petBillList')
-  if(billStr) billList.value = JSON.parse(billStr)
-  // 读取免疫日历记录
-  const immuneStr = localStorage.getItem('petImmuneList')
-  if(immuneStr) immuneList.value = JSON.parse(immuneStr)
+  loadBaseData()
+  calcImmTodo()
 })
 </script>
-
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
 .home-page {
@@ -377,7 +293,6 @@ onMounted(() => {
   padding: 0 20px;
   position: relative;
 }
-
 /* 空状态卡片 */
 .empty-warn-section {
   padding:40px 0;
@@ -405,7 +320,6 @@ onMounted(() => {
   border-radius:30px;
   cursor:pointer;
 }
-
 /* 小红点提醒 */
 .service-card{
   position:relative;
@@ -419,7 +333,6 @@ onMounted(() => {
   background:#e53935;
   border-radius:50%;
 }
-
 /* AI健康日报静态占位 */
 .ai-preview-section{
   margin:40px 0 10px;
@@ -441,7 +354,6 @@ onMounted(() => {
   font-size:14px;
   color:#6b4c32;
 }
-
 /* ================= 1. Hero 区 ================= */
 .hero-section {
   display: flex;
@@ -484,7 +396,7 @@ onMounted(() => {
 }
 .hero-text h1 {
   font-family: 'ZCOOL KuaiLe', "YouYuan", "Microsoft YaHei", sans-serif;
-  font-size: 54px;
+  font-size: 48px;
   font-weight: 900;
   color: #1A2B4C;
   line-height: 1.3;
@@ -511,7 +423,6 @@ onMounted(() => {
 }
 .cta-btn { background: #1A2B4C; color: #FFF; border: none; padding: 16px 36px; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-left:20px;position: relative; z-index: 30; }
 .cta-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(26, 43, 76, 0.2); }
-
 .hero-visual {
   flex: 1.1;
   position: relative;
@@ -542,7 +453,6 @@ onMounted(() => {
 .p2 { width: 40px; height: 40px; bottom: 25%; left: 25%; animation: floatPaw 5s ease-in-out infinite alternate-reverse; }
 .p3 { width: 55px; height: 55px; top: 5%; right: 25%; animation: floatPaw 6s ease-in-out infinite alternate; }
 .p4 { width: 45px; height: 45px; bottom: 20%; right: 20%; animation: floatPaw 4s ease-in-out infinite alternate-reverse; }
-
 @keyframes wobbleMain {
   0% { transform: translateY(0px) rotate(0deg); }
   50% { transform: translateY(-15px) rotate(5deg); }
@@ -561,13 +471,11 @@ onMounted(() => {
   0% { transform: translateY(0px) rotate(0deg); opacity: 0.6;}
   100% { transform: translateY(-25px) rotate(20deg); opacity: 1;}
 }
-
 .section-header-wrap { text-align: center; margin-bottom: 60px; position: relative; z-index: 10; }
 .tape-title-img { position: relative; display: inline-block; margin-bottom: 12px; }
 .tape-title-img img { width: 280px; height: auto; opacity: 0.9; display: block; }
-.tape-title-img h2 { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0; font-size: 22px; color: #5C3A21; font-weight: 900; letter-spacing: 2px; white-space: nowrap; }
+.tape-title-img h2 { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0; font-size: 24px; color: #5C3A21; font-weight: 900; letter-spacing: 2px; white-space: nowrap; }
 .section-subtitle { font-size: 16px; color: #8892A0; margin-top: 10px; }
-
 .services-section { padding: 100px 0; position: relative; overflow: visible; }
 .corner-decor { position: absolute; width: 140px; height: 140px; object-fit: contain; z-index: 1; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1)); }
 .top-left { top: 190px; left: -50px; animation: floatCorner 6s ease-in-out infinite; }
@@ -603,7 +511,6 @@ onMounted(() => {
   color: #1A2B4C;
   font-weight: bold;
 }
-
 .timeline-section { padding: 80px 0; position: relative; z-index: 10; }
 .curve-timeline-wrapper {
   position: relative;
@@ -705,7 +612,6 @@ onMounted(() => {
   color: #5C3A21;
   font-weight: 900;
 }
-
 .news-section { padding: 80px 0; position: relative; z-index: 10; }
 .news-layout {
   display: flex;
@@ -783,37 +689,6 @@ onMounted(() => {
   border-radius: 16px;
   margin-bottom: 20px;
 }
-
-.stats-section {
-  padding: 80px 0;
-  position: relative;
-  z-index: 10;
-}
-.stats-container {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  background: #FFFFFF;
-  border-radius: 30px;
-  padding: 40px;
-  border: 1px dashed #E6D0B3;
-}
-.stats-bird {
-  position: absolute;
-  top: 50px;
-  right: 22%;
-  width: 35px;
-  height: 35px;
-  object-fit: contain;
-  z-index: 20;
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-  animation: floatCorner 4s ease-in-out infinite;
-}
-.stat-item { text-align: center; }
-.stat-item h3 { font-size: 42px; font-weight: 900; color: #1A2B4C; margin: 0 0 10px; }
-.stat-item p { font-size: 15px; color: #5E6B82; margin: 0; font-weight: bold; }
-.stat-divider { width: 1px; height: 60px; background: #F2EBE1; }
-
 .cta-section {
   padding: 80px 0 100px;
   position: relative;

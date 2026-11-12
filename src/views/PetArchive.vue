@@ -1,10 +1,16 @@
 <template>
   <div class="page-wrap">
     <Header />
+    <div class="main-container">
+      <!-- ========== 胶带标题【和养护百科News结构完全一致】 ========== -->
+      <div class="section-header-wrap">
+        <div class="tape-title-img">
+          <img src="/jiaotiao1.png" alt="胶布背景" />
+          <h2>我的宠物档案</h2>
+        </div>
+        <p class="section-subtitle">记录小动物基础信息、生日、种类、体重，一站式管理它的资料</p>
+      </div>
 
-    <div class="container">
-      <h2 class="page-title">我的宠物档案</h2>
-      <p class="page-desc">记录小动物基础信息、生日、种类、体重，一站式管理它的资料</p>
       <div class="card-wrap">
         <!-- 宠物卡片列表 -->
         <div class="pet-card" v-for="(item, index) in petList" :key="index">
@@ -23,7 +29,6 @@
             <button class="card-btn del-btn" @click="delPet(index)">删除</button>
           </div>
         </div>
-
         <!-- 添加新宠物卡片 -->
         <div class="pet-card add-card" @click="openAdd">
           <div class="plus">+</div>
@@ -31,7 +36,6 @@
         </div>
       </div>
     </div>
-
     <!-- 弹窗蒙版 -->
     <div class="mask" v-show="maskVisible">
       <div class="form-box">
@@ -65,7 +69,6 @@
         </div>
       </div>
     </div>
-
     <!-- 隐藏文件上传input -->
     <input
       ref="avatarInputRef"
@@ -76,12 +79,11 @@
     />
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from 'vue'
 import Header from '../components/Header.vue'
 
-// 状态
+// 弹窗状态
 const maskVisible = ref(false)
 const formTitle = ref('添加宠物信息')
 const editIndex = ref(null)
@@ -98,11 +100,11 @@ const formData = ref({
 })
 
 // 宠物列表，读取localStorage
-const petList = ref(JSON.parse(localStorage.getItem('petData')) || [])
+const petList = ref(JSON.parse(localStorage.getItem('petArchiveList')) || [])
 
 // 保存到本地存储
 function saveData() {
-  localStorage.setItem('petData', JSON.stringify(petList.value))
+  localStorage.setItem('petArchiveList', JSON.stringify(petList.value))
 }
 
 // 关闭弹窗
@@ -173,10 +175,11 @@ function submitForm() {
     alert('请填全所有信息！')
     return
   }
-
   if (editIndex.value === null) {
     // 新增
+    // 新增
     petList.value.push({
+      id: Date.now().toString(),
       name: formData.value.name,
       breed: formData.value.breed,
       birth: formData.value.birth,
@@ -184,6 +187,9 @@ function submitForm() {
       weight: formData.value.weight,
       avatar: null
     })
+
+
+
   } else {
     // 修改
     const idx = editIndex.value
@@ -201,7 +207,6 @@ onMounted(() => {
   // 页面加载自动读取localStorage，ref初始化已经处理
 })
 </script>
-
 <style scoped>
 * {
   margin: 0;
@@ -209,98 +214,80 @@ onMounted(() => {
   box-sizing: border-box;
   font-family: system-ui, -apple-system, sans-serif;
 }
+
 .page-wrap {
-  background-color: rgba(255, 249, 238, 0.65);
-  min-height: 100vh;
-}
-body {
-  background-image: url("public\dangan.png");
-  background-repeat: no-repeat;
-  background-position: center;
+  background-color: rgba(253, 250, 245, 0.82);
+  background-image: url('/home_bg.jpg');
   background-size: cover;
   background-attachment: fixed;
-  color: #1a2b48;
+  background-blend-mode: overlay;
+  min-height: 100vh;
+  padding-top: 80px;
 }
-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 80px;
+
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
 }
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 24px;
-  font-weight: bold;
+
+.section-header-wrap {
+  text-align: center;
+  margin-bottom: 60px;
+  position: relative;
+  z-index: 10;
 }
-.logo-icon {
-  width: 28px;
-  height: 28px;
-  background: linear-gradient(135deg,#ff7b63,#ffb86c);
-  border-radius: 8px;
-}
-nav {
-  display: flex;
-  gap: 42px;
-  align-items: center;
-}
-nav a {
-  text-decoration: none;
-  color: #444;
-  font-size: 17px;
-  padding: 6px 10px;
-  border-radius: 12px;
-}
-nav a.active {
-  background: #ffe9cc;
-  color: #d47828;
-}
-.header-right {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-.login-link {
-  color: #444;
-  text-decoration: none;
-  font-size: 16px;
-}
-.btn-dark {
-  background: #1a2b48;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 14px;
-  font-size: 16px;
-  cursor: pointer;
-}
-.container {
-  padding: 40px 80px;
-}
-.page-title {
-  font-size: 32px;
+
+.tape-title-img {
+  position: relative;
+  display: inline-block;
   margin-bottom: 12px;
 }
-.page-desc {
-  color: #666;
-  font-size: 16px;
-  margin-bottom: 32px;
+
+.tape-title-img img {
+  width: 280px;
+  height: auto;
+  opacity: 0.9;
+  display: block;
 }
+
+.tape-title-img h2 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font-size: 24px;
+  color: #5C3A21;
+  font-weight: 900;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+.section-subtitle {
+  font-size: 16px;
+  color: #8892A0;
+  margin-top: 10px;
+}
+
 .card-wrap {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
+
 .pet-card {
-  background: #ffffff;
+  background: #fff8ee;
+  border: 1px solid #f3e2c4;
   border-radius: 24px;
   padding: 24px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   position: relative;
   text-align: center;
 }
-.pet-avatar-wrap{
+
+
+.pet-avatar-wrap {
   width: 100px;
   height: 100px;
   border-radius: 50%;
@@ -312,47 +299,57 @@ nav a.active {
   overflow: hidden;
   cursor: pointer;
 }
-.pet-avatar-wrap img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
+
+.pet-avatar-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
-.avatar-tip{
-  font-size:13px;
-  color:#999;
-  text-align:center;
+
+.avatar-tip {
+  font-size: 13px;
+  color: #999;
+  text-align: center;
 }
+
 .pet-name {
   font-size: 20px;
   font-weight: bold;
   margin-bottom: 8px;
+  color: #5C3A21;
 }
+
 .pet-info {
   color: #666;
   font-size: 14px;
   line-height: 1.8;
-  margin-bottom:16px;
+  margin-bottom: 16px;
 }
-.card-btn-group{
-  display:flex;
-  gap:10px;
-  justify-content:center;
+
+.card-btn-group {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
-.card-btn{
-  padding:6px 12px;
-  border-radius:8px;
-  border:none;
-  cursor:pointer;
-  font-size:14px;
+
+.card-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
 }
-.edit-btn{
-  background:#ffe9cc;
-  color:#d47828;
+
+.edit-btn {
+  background: #ffe9cc;
+  color: #d47828;
 }
-.del-btn{
-  background:#ffeeee;
-  color:#c83c3c;
+
+.del-btn {
+  background: #ffeeee;
+  color: #c83c3c;
 }
+
 .add-card {
   border: 2px dashed #ffd299;
   border-radius: 24px;
@@ -363,75 +360,92 @@ nav a.active {
   min-height: 240px;
   color: #d47828;
   cursor: pointer;
-  background: #ffffff44;
+  background: #fff3df;
 }
-.add-card .plus{
-  font-size:32px;
-  margin-bottom:8px;
+
+.add-card .plus {
+  font-size: 32px;
+  margin-bottom: 8px;
 }
+
 .mask {
   position: fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background: rgba(0,0,0,0.4);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index:999;
+  z-index: 999;
 }
+
 .form-box {
-  background:#fff;
-  border-radius:20px;
-  padding:32px;
-  width:420px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px;
+  width: 420px;
 }
-.form-box h3{
-  text-align:center;
-  margin-bottom:24px;
-  font-size:22px;
+
+.form-box h3 {
+  text-align: center;
+  margin-bottom: 24px;
+  font-size: 22px;
+  color: #5C3A21;
 }
-.form-item{
-  margin-bottom:18px;
+
+.form-item {
+  margin-bottom: 18px;
 }
-.form-item label{
-  display:block;
-  margin-bottom:6px;
-  font-weight:500;
+
+.form-item label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #5C3A21;
 }
-.form-item input, .form-item select{
-  width:100%;
-  padding:10px 12px;
-  border:1px solid #ddd;
-  border-radius:10px;
-  font-size:16px;
+
+.form-item input,
+.form-item select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e6d5c3;
+  border-radius: 10px;
+  font-size: 16px;
+  background: #fffdf8;
 }
-.form-btn-group{
-  display:flex;
-  gap:16px;
-  margin-top:24px;
+
+.form-btn-group {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
 }
-.btn-cancel{
-  flex:1;
-  padding:12px;
-  border:1px solid #ccc;
-  background:#fff;
-  border-radius:12px;
-  font-size:16px;
-  cursor:pointer;
+
+.btn-cancel {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
 }
-.btn-submit{
-  flex:1;
-  padding:12px;
-  border:none;
-  background:#1a2b48;
-  color:#fff;
-  border-radius:12px;
-  font-size:16px;
-  cursor:pointer;
+
+.btn-submit {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background: #f5a623;
+  color: #fff;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
 }
-#avatarInput{
-  display:none;
+
+#avatarInput {
+  display: none;
 }
+
 </style>
+
