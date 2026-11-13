@@ -1,4 +1,5 @@
 <template>
+  <Header />
   <div class="login-page">
     <!-- 左侧背景区域：你后面可以在这里插背景图 -->
     <div class="login-left">
@@ -53,7 +54,8 @@
         </el-tabs>
 
         <div class="other-tip">
-          <span @click="$router.push('/')">← 返回首页</span>
+          <RouterLink to="/">← 返回首页</RouterLink>
+
         </div>
       </div>
     </div>
@@ -63,11 +65,16 @@
 <script setup>
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useRouter } from 'vue-router'
-
+import { useRouter, RouterLink } from 'vue-router'
 const router = useRouter()
-const activeTab = ref('login')
 
+// 从本地取出已经注册过的账号数组，没有就空数组
+const getUserList = () => {
+  const str = localStorage.getItem('petUserList')
+  return str ? JSON.parse(str) : []
+}
+
+const activeTab = ref('login')
 const loginFormRef = ref(null)
 const loginForm = ref({
   username: '',
@@ -106,20 +113,44 @@ const regRules = ref({
   ]
 })
 
+// 登录逻辑：校验账号密码是否存在本地账号列表
 const handleLogin = async () => {
   await loginFormRef.value.validate()
+  const userList = getUserList()
+  const findUser = userList.find(u => u.username === loginForm.value.username && u.password === loginForm.value.password)
+  if (!findUser) {
+    ElMessage.error('账号或者密码错误')
+    return
+  }
   ElMessage.success('登录成功！')
   localStorage.setItem('petToken', 'test-token-123')
-  router.push('/home')
+  router.push('/')
 }
 
+// 注册逻辑：判断用户名是否已经存在，防止重复建号
 const handleRegister = async () => {
   await regFormRef.value.validate()
+  const userList = getUserList()
+  // 判断账号重复
+  const exist = userList.some(item => item.username === regForm.value.username)
+  if (exist) {
+    ElMessage.error('该账号已经被注册，请换一个账号')
+    return
+  }
+  // 添加新账号存入本地存储
+  userList.push({
+    username: regForm.value.username,
+    password: regForm.value.password,
+    phone: regForm.value.phone
+  })
+  localStorage.setItem('petUserList', JSON.stringify(userList))
+
   ElMessage.success('注册成功，请登录')
   activeTab.value = 'login'
   loginForm.value.username = regForm.value.username
 }
 </script>
+
 
 <style scoped>
 .login-page {
