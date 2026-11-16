@@ -14,7 +14,7 @@
         v-for="cell in cells"
         :key="cell.key"
         class="day-cell"
-        :class="{ empty: cell.empty, today: cell.isToday }"
+        :class="{ empty: cell.empty, today: cell.isToday, remind: cell.remindList.length > 0 }"
         @click="handleClick(cell)"
       >
         <div class="day-num">{{ cell.day }}</div>
@@ -26,56 +26,60 @@
           >
             {{ item.type }}：{{ item.name }}
           </span>
+          <!-- 新增提醒标签 -->
+          <span
+            v-for="item in cell.remindList"
+            :key="'remind-' + item.id"
+            class="day-tag remind-tag"
+          >
+            ⚠️待接种：{{ item.name }}
+          </span>
         </div>
       </div>
     </div>
     <div class="calendar-tip">点击日期添加免疫记录</div>
   </div>
 </template>
-
 <script setup>
 import { computed } from 'vue'
-
 const props = defineProps({
   year: Number,
   month: Number,
   records: Array
 })
 const emit = defineEmits(['pick-date'])
-
 const cells = computed(() => {
   const arr = []
   const first = new Date(props.year, props.month - 1, 1)
   const last = new Date(props.year, props.month, 0)
   const weekStart = first.getDay()
   const totalDays = last.getDate()
-
   // 前面空白占位
   for (let i = 0; i < weekStart; i++) {
     arr.push({ key: `empty-${i}`, empty: true })
   }
-
   const now = new Date()
   const todayY = now.getFullYear()
   const todayM = now.getMonth() + 1
   const todayD = now.getDate()
-
   for (let d = 1; d <= totalDays; d++) {
     const dateStr = `${props.year}-${String(props.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`
     const list = props.records.filter(r => r.date === dateStr)
+    // 新增：筛选下次接种日等于当前日期的记录
+    const remindList = props.records.filter(r => r.next === dateStr)
     const isToday = props.year === todayY && props.month === todayM && d === todayD
     arr.push({
       key: dateStr,
       day: d,
       dateStr,
       list,
+      remindList, // 新增提醒数组
       isToday,
       empty: false
     })
   }
   return arr
 })
-
 function handleClick(cell) {
   if (cell.empty) return
   emit('pick-date', cell.dateStr)
@@ -103,7 +107,7 @@ function handleClick(cell) {
 .day-cell {
   min-height: 78px;
   border-radius: 14px;
-  background: #fffaf2;
+  background: #ffe9cc;
   padding: 8px;
   cursor: pointer;
   transition: 0.15s;
@@ -132,9 +136,9 @@ function handleClick(cell) {
   margin-top: 6px;
 }
 .day-tag {
-  font-size: 11px;
+  font-size: 18px;
   background: #ffe9cc;
-  color: #d47828;
+  color: #994c14;
   border-radius: 6px;
   padding: 1px 4px;
   white-space: nowrap;
@@ -142,9 +146,18 @@ function handleClick(cell) {
   text-overflow: ellipsis;
 }
 .calendar-tip {
-  font-size: 13px;
+  font-size: 12px;
   color: #999;
-  margin-top: 14px;
+  margin-top: 12px;
   text-align: center;
 }
+.day-cell.remind {
+  background: #ffe2c4 !important;
+  border: 1px solid #ff9a52;
+}
+.day-tag.remind-tag {
+  background: #ffd299;
+  color: #994c14;
+}
+
 </style>

@@ -216,8 +216,8 @@ onMounted(() => {
 }
 
 .page-wrap {
-  background-color: rgba(253, 250, 245, 0.82);
-  background-image: url('/home_bg.jpg');
+  background-color: rgba(253, 250, 245, 0.25);
+  background-image: url('/dangan.png');
   background-size: cover;
   background-attachment: fixed;
   background-blend-mode: overlay;

@@ -186,13 +186,13 @@ onUnmounted(() => {
 <style scoped>
 .calendar-page {
   min-height: 100vh;
-  background-image: url('home_bg.jpg');
-  background-size:cover;
+  background-image: url('/calendar.jpg');
+  background-size: cover;
+  background-position: center;
   background-attachment: fixed;
-  background-color:rgba(253, 250, 245, 0.8);
-  background-blend-mode: overlay;
-  padding‑top: 120px;
+  padding-top: 120px;
 }
+
 .main-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -223,14 +223,14 @@ onUnmounted(() => {
   left: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
-  font-size: 30px;
+  font-size: 26px;
   color: #5C3A21;
   font-weight: 900;
   letter-spacing: 2px;
   white-space: nowrap;
 }
 .section-subtitle {
-  font-size: 16px;
+  font-size: 20px;
   color: #8892A0;
   margin-top: 10px;
 }

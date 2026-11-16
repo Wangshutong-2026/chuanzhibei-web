@@ -215,10 +215,10 @@ onUnmounted(() => {
 <style scoped>
 .bill-page {
   min-height: 100vh;
-  background-image: url("/home_bg.jpg");
+  background-image: url("/bill-bg.jpg");
   background-size: cover;
   background-attachment: fixed;
-  background-color: rgba(253, 250, 245, 0.82);
+  background-color: rgba(253, 250, 245, 0.5);
   background-blend-mode: overlay;
   font-family: -apple-system, sans-serif;
   padding-top: 120px;

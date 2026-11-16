@@ -170,7 +170,7 @@
           </div>
         </div>
       </section>
-      <!-- ================= 4. 养宠知识情报站 ================= -->
+     <!-- ================= 4. 养宠知识情报站 ================= -->
       <section class="news-section">
         <div class="section-header-wrap">
           <div class="tape-title-img">
@@ -181,7 +181,7 @@
         </div>
         <div class="news-layout">
           <div class="news-left">
-            <div class="news-card large-card" @click="router.push('/news')" style="cursor: pointer;">
+            <a class="news-card large-card" :href="newsLinks.milk" target="_blank" style="cursor: pointer; text-decoration: none;">
               <img src="/cat.jpg" class="large-card-cover" alt="科普封面" />
               <div class="news-content">
                 <div class="news-tag" style="background: #FFE4EC; color: #FF7A9E;">饮食避坑</div>
@@ -189,20 +189,20 @@
                 <p>绝大多数成年猫咪都有乳糖不耐受，喝牛奶极易导致严重腹泻和脱水。如果想补充营养，请选择专用的宠物羊奶粉。</p>
                 <span class="read-more">前往养护百科 →</span>
               </div>
-            </div>
+            </a>
             <div class="news-side-stack">
-              <div class="news-card small-card" @click="router.push('/news')" style="cursor: pointer;">
+              <a class="news-card small-card" :href="newsLinks.hamster" target="_blank" style="cursor: pointer; text-decoration: none;">
                 <div class="news-tag" style="background: #FFF3D6; color: #FFB020;">饲养避坑</div>
                 <h3>仓鼠绝对不能合笼饲养！</h3>
                 <p>仓鼠领地意识极强，合笼极易导致惨烈打架。系统在建立异宠档案时，会自动向新手主人推送“单笼独居”的预警提示。</p>
                 <span class="read-more">阅读更多 →</span>
-              </div>
-              <div class="news-card small-card" @click="router.push('/news')" style="cursor: pointer;">
+              </a>
+              <a class="news-card small-card" :href="newsLinks.gecko" target="_blank" style="cursor: pointer; text-decoration: none;">
                 <div class="news-tag" style="background: #E0F6E9; color: #3DBE7B;">环境温控</div>
                 <h3>豹纹守宫缺钙怎么补？</h3>
                 <p>爬宠极易缺乏维生素D3导致骨骼变形。专属异宠档案支持记录日常喂食的含钙量。</p>
                 <span class="read-more">阅读更多 →</span>
-              </div>
+              </a>
             </div>
           </div>
           <div class="news-right-img">
@@ -210,13 +210,7 @@
           </div>
         </div>
       </section>
-      <!-- 🔵第三优先级：AI健康日报【静态占位，仅答辩展望，不调用后端】 -->
-      <section class="ai-preview-section">
-        <div class="ai-preview-card">
-          <div class="ai-preview-title">🤖 AI健康日报（规划功能）</div>
-          <p class="ai-preview-desc">整合宠物档案、喂食、免疫驱虫数据，AI生成每日健康总结，本功能将在后续迭代接入大模型接口。</p>
-        </div>
-      </section>
+
       <!-- ================= 6. 底部行动号召 ================= -->
       <section class="cta-section">
         <div class="cta-card">
@@ -239,6 +233,18 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Header from '../components/Header.vue'
 const router = useRouter()
+
+// 情报站卡片外部科普链接：把下面三个地址替换成真实的科普网页 URL
+const newsLinks = {
+  milk: 'https://www.sohu.com/a/948720991_99986638',
+  hamster: 'https://www.sohu.com/a/946854029_99986638',
+  gecko: 'https://www.toutiao.com/article/7447413516157338123/'
+}
+// 新标签页打开外部链接
+function openOuter(url) {
+  if (!url || url === '#' || url.includes('example.com')) return
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
 
 const petArchiveList = ref([])
 const immuneList = ref([])
@@ -332,27 +338,6 @@ onMounted(() => {
   height:12px;
   background:#e53935;
   border-radius:50%;
-}
-/* AI健康日报静态占位 */
-.ai-preview-section{
-  margin:40px 0 10px;
-}
-.ai-preview-card{
-  background:#fff8e8;
-  border:1px dashed #e2c49c;
-  border-radius:16px;
-  padding:20px;
-  text-align:center;
-}
-.ai-preview-title{
-  font-size:17px;
-  font-weight:bold;
-  color:#8c5e38;
-  margin-bottom:8px;
-}
-.ai-preview-desc{
-  font-size:14px;
-  color:#6b4c32;
 }
 /* ================= 1. Hero 区 ================= */
 .hero-section {

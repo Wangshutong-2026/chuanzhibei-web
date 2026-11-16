@@ -6,7 +6,7 @@
     <div class="header-inner">
       <!-- logo改用RouterLink，移除@click="$router.push" -->
       <RouterLink class="logo" to="/">
-        <div class="logo-icon"></div>
+        <img class="logo-icon" src="/logo.png" alt="logo" />
         <span class="logo-text">伴宠有方</span>
       </RouterLink>
 
@@ -81,11 +81,13 @@ import { RouterLink } from 'vue-router'
   text-decoration: none;
 }
 .logo-icon {
-  width: 26px; height: 26px;
-  background: linear-gradient(135deg, #FF9A44 0%, #FC6076 100%);
+  width: 26px;
+  height: 26px;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(252, 96, 118, 0.3);
+  object-fit: cover; /* 图片不变形，裁切适配 */
 }
+
 .logo-text { font-size: 22px; font-weight: 900; color: #1A2B4C; letter-spacing: 0.5px; }
 
 .nav-links {
