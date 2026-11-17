@@ -35,7 +35,7 @@
         <VaccineCalendar
           :year="currentYear"
           :month="currentMonth"
-          :records="filterRecords"
+          :records="petFiltered"
           @pick-date="openForm"
         />
         <!-- 记录清单 -->
@@ -112,10 +112,15 @@ function loadData() {
   loadPetArchive()
   loadVaccineRecord()
 }
-// 根据petId过滤记录
-const filterRecords = computed(() => {
+// 按宠物过滤（日历需要拿到全部记录，自行按接种日/下次提醒日归到对应月）
+const petFiltered = computed(() => {
   if (!selectPetId.value) return vaccineList.value
   return vaccineList.value.filter(r => r.petId === selectPetId.value)
+})
+// 右侧清单：仅显示当前所选年月的接种记录，随月份切换联动
+const filterRecords = computed(() => {
+  const ym = `${currentYear.value}-${String(currentMonth.value).padStart(2, '0')}`
+  return petFiltered.value.filter(r => r.date && r.date.startsWith(ym))
 })
 // 月份切换
 function prevMonth() {

@@ -8,12 +8,11 @@
           <img src="/jiaotiao1.png" alt="胶布背景" />
           <h2>我的宠物档案</h2>
         </div>
-        <p class="section-subtitle">记录小动物基础信息、生日、种类、体重，一站式管理它的资料</p>
+        <p class="section-subtitle">记录小动物基础信息、生日、种类、体重，一站式管理它的资料</p >
       </div>
-
       <div class="card-wrap">
         <!-- 宠物卡片列表 -->
-        <div class="pet-card" v-for="(item, index) in petList" :key="index">
+        <div class="pet-card" v-for="(item, index) in petList" :key="item.id">
           <div class="pet-avatar-wrap" @click="handleChangeAvatar(index)">
             <img v-if="item.avatar" :src="item.avatar" alt="头像" />
             <span v-else class="avatar-tip">点我上传<br />照片</span>
@@ -61,11 +60,11 @@
         </div>
         <div class="form-item">
           <label>体重(kg)</label>
-          <input v-model="formData.weight" type="number" step="0.1" placeholder="例如：4.5" />
+          <input v-model="formData.weight" type="number" step="0.1" min="0.1" placeholder="例如：4.5" />
         </div>
         <div class="form-btn-group">
           <button class="btn-cancel" @click="closeMask">取消</button>
-          <button class="btn-submit" @click="submitForm">保存</button>
+          <button class="btn-submit" @click="submitForm" :disabled="submitting">保存</button>
         </div>
       </div>
     </div>
@@ -79,16 +78,18 @@
     />
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import Header from '../components/Header.vue'
 
-// 弹窗状态
+// 弹窗状态 + 提交锁（防止重复点击保存）
 const maskVisible = ref(false)
 const formTitle = ref('添加宠物信息')
 const editIndex = ref(null)
 const currentAvatarIndex = ref(null)
 const avatarInputRef = ref(null)
+const submitting = ref(false) 
 
 // 表单数据
 const formData = ref({
@@ -100,20 +101,32 @@ const formData = ref({
 })
 
 // 宠物列表，读取localStorage
-const petList = ref(JSON.parse(localStorage.getItem('petArchiveList')) || [])
+const petList = ref([])
+const initList = localStorage.getItem('petArchiveList')
+if (initList) {
+  try {
+    petList.value = JSON.parse(initList)
+  } catch (e) {
+    console.error('宠物档案解析失败', e)
+    petList.value = []
+    localStorage.removeItem('petArchiveList')
+  }
+}
 
 // 保存到本地存储
 function saveData() {
   localStorage.setItem('petArchiveList', JSON.stringify(petList.value))
 }
 
-// 关闭弹窗
+// 关闭弹窗 + 重置提交锁
 function closeMask() {
   maskVisible.value = false
+  submitting.value = false
 }
 
 // 打开新增
 function openAdd() {
+  if (maskVisible.value) return 
   editIndex.value = null
   formTitle.value = '添加宠物信息'
   formData.value = {
@@ -128,6 +141,7 @@ function openAdd() {
 
 // 打开编辑
 function openEdit(index) {
+  if (maskVisible.value) return
   editIndex.value = index
   formTitle.value = '修改宠物信息'
   const item = petList.value[index]
@@ -157,10 +171,24 @@ function handleChangeAvatar(index) {
 function onAvatarFileChange(e) {
   const file = e.target.files[0]
   if (!file || currentAvatarIndex.value === null) return
+  // ✅ 限制图片大小，超大图不处理（解决base64太长localStorage存不下刷新丢失）
+  if (file.size > 1024 * 1024 * 1.5) {
+    alert('图片不能大于1.5M，太大刷新容易丢失！')
+    e.target.value = ''
+    return
+  }
+  // ✅ 限制图片类型
+  if (!file.type.startsWith('image/')) {
+    e.target.value = ''
+    return
+  }
   const reader = new FileReader()
   reader.onload = function (ev) {
-    petList.value[currentAvatarIndex.value].avatar = ev.target.result
-    saveData()
+    // 下标存在才赋值
+    if (petList.value[currentAvatarIndex.value]) {
+      petList.value[currentAvatarIndex.value].avatar = ev.target.result
+      saveData()
+    }
     currentAvatarIndex.value = null
   }
   reader.readAsDataURL(file)
@@ -169,44 +197,49 @@ function onAvatarFileChange(e) {
 }
 
 // 表单提交保存
-function submitForm() {
+async function submitForm() {
+  // 校验
   const { name, breed, birth, weight } = formData.value
   if (!name.trim() || !breed.trim() || !birth || !weight) {
     alert('请填全所有信息！')
     return
   }
+  if (Number(weight) <= 0) {
+    alert('体重必须大于0！')
+    return
+  }
+  if (submitting.value) return
+  submitting.value = true
+
   if (editIndex.value === null) {
-    // 新增
     // 新增
     petList.value.push({
       id: Date.now().toString(),
-      name: formData.value.name,
-      breed: formData.value.breed,
+      name: formData.value.name.trim(),
+      breed: formData.value.breed.trim(),
       birth: formData.value.birth,
       gender: formData.value.gender,
-      weight: formData.value.weight,
+      weight: Number(formData.value.weight),
       avatar: null
     })
-
-
-
   } else {
     // 修改
     const idx = editIndex.value
-    petList.value[idx].name = formData.value.name
-    petList.value[idx].breed = formData.value.breed
-    petList.value[idx].birth = formData.value.birth
-    petList.value[idx].gender = formData.value.gender
-    petList.value[idx].weight = formData.value.weight
+    const target = petList.value[idx]
+    target.name = formData.value.name.trim()
+    target.breed = formData.value.breed.trim()
+    target.birth = formData.value.birth
+    target.gender = formData.value.gender
+    target.weight = Number(formData.value.weight)
   }
   saveData()
   closeMask()
 }
 
 onMounted(() => {
-  // 页面加载自动读取localStorage，ref初始化已经处理
 })
 </script>
+
 <style scoped>
 * {
   margin: 0;
@@ -214,7 +247,6 @@ onMounted(() => {
   box-sizing: border-box;
   font-family: system-ui, -apple-system, sans-serif;
 }
-
 .page-wrap {
   background-color: rgba(253, 250, 245, 0.25);
   background-image: url('/dangan.png');
@@ -224,33 +256,28 @@ onMounted(() => {
   min-height: 100vh;
   padding-top: 80px;
 }
-
 .main-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px 60px;
 }
-
 .section-header-wrap {
   text-align: center;
   margin-bottom: 60px;
   position: relative;
   z-index: 10;
 }
-
 .tape-title-img {
   position: relative;
   display: inline-block;
   margin-bottom: 12px;
 }
-
 .tape-title-img img {
   width: 280px;
   height: auto;
   opacity: 0.9;
   display: block;
 }
-
 .tape-title-img h2 {
   position: absolute;
   top: 50%;
@@ -263,19 +290,16 @@ onMounted(() => {
   letter-spacing: 2px;
   white-space: nowrap;
 }
-
 .section-subtitle {
   font-size: 16px;
   color: #8892A0;
   margin-top: 10px;
 }
-
 .card-wrap {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
-
 .pet-card {
   background: #fff8ee;
   border: 1px solid #f3e2c4;
@@ -285,8 +309,6 @@ onMounted(() => {
   position: relative;
   text-align: center;
 }
-
-
 .pet-avatar-wrap {
   width: 100px;
   height: 100px;
@@ -299,39 +321,33 @@ onMounted(() => {
   overflow: hidden;
   cursor: pointer;
 }
-
 .pet-avatar-wrap img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-
 .avatar-tip {
   font-size: 13px;
   color: #999;
   text-align: center;
 }
-
 .pet-name {
   font-size: 20px;
   font-weight: bold;
   margin-bottom: 8px;
   color: #5C3A21;
 }
-
 .pet-info {
   color: #666;
   font-size: 14px;
   line-height: 1.8;
   margin-bottom: 16px;
 }
-
 .card-btn-group {
   display: flex;
   gap: 10px;
   justify-content: center;
 }
-
 .card-btn {
   padding: 6px 12px;
   border-radius: 8px;
@@ -339,17 +355,14 @@ onMounted(() => {
   cursor: pointer;
   font-size: 14px;
 }
-
 .edit-btn {
   background: #ffe9cc;
   color: #d47828;
 }
-
 .del-btn {
   background: #ffeeee;
   color: #c83c3c;
 }
-
 .add-card {
   border: 2px dashed #ffd299;
   border-radius: 24px;
@@ -362,12 +375,10 @@ onMounted(() => {
   cursor: pointer;
   background: #fff3df;
 }
-
 .add-card .plus {
   font-size: 32px;
   margin-bottom: 8px;
 }
-
 .mask {
   position: fixed;
   top: 0;
@@ -380,32 +391,27 @@ onMounted(() => {
   justify-content: center;
   z-index: 999;
 }
-
 .form-box {
   background: #fff;
   border-radius: 20px;
   padding: 32px;
   width: 420px;
 }
-
 .form-box h3 {
   text-align: center;
   margin-bottom: 24px;
   font-size: 22px;
   color: #5C3A21;
 }
-
 .form-item {
   margin-bottom: 18px;
 }
-
 .form-item label {
   display: block;
   margin-bottom: 6px;
   font-weight: 500;
   color: #5C3A21;
 }
-
 .form-item input,
 .form-item select {
   width: 100%;
@@ -415,13 +421,11 @@ onMounted(() => {
   font-size: 16px;
   background: #fffdf8;
 }
-
 .form-btn-group {
   display: flex;
   gap: 16px;
   margin-top: 24px;
 }
-
 .btn-cancel {
   flex: 1;
   padding: 12px;
@@ -431,7 +435,6 @@ onMounted(() => {
   font-size: 16px;
   cursor: pointer;
 }
-
 .btn-submit {
   flex: 1;
   padding: 12px;
@@ -442,10 +445,22 @@ onMounted(() => {
   font-size: 16px;
   cursor: pointer;
 }
-
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 #avatarInput {
   display: none;
 }
-
+/* 移动端适配 */
+@media (max-width:768px){
+  .card-wrap{
+    grid-template-columns: repeat(2,1fr);
+  }
+}
+@media (max-width:480px){
+  .card-wrap{
+    grid-template-columns: 1fr;
+  }
+}
 </style>
-

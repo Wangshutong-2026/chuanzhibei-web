@@ -54,8 +54,7 @@
         </el-tabs>
 
         <div class="other-tip">
-          <RouterLink to="/">← 返回首页</RouterLink>
-
+          <span @click="$router.push('/')">← 返回首页</span>
         </div>
       </div>
     </div>
@@ -124,6 +123,7 @@ const handleLogin = async () => {
   }
   ElMessage.success('登录成功！')
   localStorage.setItem('petToken', 'test-token-123')
+  localStorage.setItem('petCurrentUser', loginForm.value.username)
   router.push('/')
 }
 

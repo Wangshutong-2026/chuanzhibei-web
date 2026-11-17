@@ -11,7 +11,7 @@
     </div>
     <div class="calendar-grid">
       <div
-        v-for="cell in cells"
+        v-for="cell in getCells()"
         :key="cell.key"
         class="day-cell"
         :class="{ empty: cell.empty, today: cell.isToday, remind: cell.remindList.length > 0 }"
@@ -41,22 +41,22 @@
   </div>
 </template>
 <script setup>
-import { computed } from 'vue'
+
 const props = defineProps({
   year: Number,
   month: Number,
   records: Array
 })
 const emit = defineEmits(['pick-date'])
-const cells = computed(() => {
+function getCells() {
+  const records = props.records || []
   const arr = []
   const first = new Date(props.year, props.month - 1, 1)
   const last = new Date(props.year, props.month, 0)
   const weekStart = first.getDay()
   const totalDays = last.getDate()
-  // 前面空白占位
   for (let i = 0; i < weekStart; i++) {
-    arr.push({ key: `empty-${i}`, empty: true })
+    arr.push({ key: `empty-${i}`, empty: true, day: '', list: [], remindList: [], isToday: false })
   }
   const now = new Date()
   const todayY = now.getFullYear()
@@ -64,22 +64,21 @@ const cells = computed(() => {
   const todayD = now.getDate()
   for (let d = 1; d <= totalDays; d++) {
     const dateStr = `${props.year}-${String(props.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-    const list = props.records.filter(r => r.date === dateStr)
-    // 新增：筛选下次接种日等于当前日期的记录
-    const remindList = props.records.filter(r => r.next === dateStr)
+    const list = records.filter(r => r.date === dateStr)
+    const remindList = records.filter(r => r.next === dateStr)
     const isToday = props.year === todayY && props.month === todayM && d === todayD
     arr.push({
       key: dateStr,
       day: d,
       dateStr,
       list,
-      remindList, // 新增提醒数组
+      remindList,
       isToday,
       empty: false
     })
   }
   return arr
-})
+}
 function handleClick(cell) {
   if (cell.empty) return
   emit('pick-date', cell.dateStr)
