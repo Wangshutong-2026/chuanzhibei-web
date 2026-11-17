@@ -1,0 +1,23 @@
+# 依赖与构建产物
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# 环境变量（真实密钥绝不提交，只保留 .env.example）
+.env
+.env.*
+!.env.example
+
+# 日志
+logs/
+*.log
+npm-debug.log*
+
+# 系统 / 编辑器
+.DS_Store
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
